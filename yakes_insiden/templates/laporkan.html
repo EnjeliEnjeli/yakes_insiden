@@ -73,7 +73,7 @@
   <div class="step-bar fade-up">
     <div class="step active" id="step-indicator-1"><span class="step-num">1</span>Jenis Insiden</div>
     <div class="step" id="step-indicator-2"><span class="step-num">2</span>Detail Kejadian</div>
-    <div class="step" id="step-indicator-3"><span class="step-num">3</span>Dampak & Tindakan</div>
+    <div class="step" id="step-indicator-3"><span class="step-num">3</span>Analisis & Submit</div>
   </div>
 
   <form method="POST" action="{{ url_for('laporkan') }}" id="mainForm">
@@ -136,6 +136,14 @@
         <input type="text" name="lokasi" class="form-control" placeholder="Contoh: Kantor Pusat Bandung, Lt. 3" required>
       </div>
       <div class="form-group">
+        <label class="form-label">Tim CSIRT</label>
+        <input type="text" name="tim_csirt" class="form-control" placeholder="Masukkan nama tim CSIRT yang menangani">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sistem Terdampak</label>
+        <input type="text" name="sistem_terdampak" class="form-control" placeholder="Contoh: Server Web, Database, Email Server">
+      </div>
+      <div class="form-group">
         <label class="form-label">Tingkat Keparahan <span class="req">*</span></label>
         <div class="severity-row">
           <label class="sev-card" id="sev-tinggi" onclick="selectSev('Tinggi')">
@@ -163,6 +171,14 @@
         <textarea name="deskripsi" class="form-control" rows="4" placeholder="Jelaskan kejadian secara detail: apa yang terjadi, bagaimana cara penyerang, informasi apa yang diminta/diakses..." required></textarea>
         <div class="form-hint">Semakin detail semakin membantu tim IT untuk menangani insiden.</div>
       </div>
+      <div class="form-group">
+        <label class="form-label">Ringkasan Insiden</label>
+        <textarea name="ringkasan_insiden" class="form-control" rows="3" placeholder="Ringkasan singkat dari insiden yang terjadi"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kronologi</label>
+        <textarea name="kronologi" class="form-control" rows="3" placeholder="Urutan waktu kejadian insiden secara detail"></textarea>
+      </div>
       <div class="nav-btns">
         <button type="button" class="btn btn-ghost" onclick="goStep(1)">← Kembali</button>
         <button type="button" class="btn btn-primary" onclick="goStep(3)">Lanjutkan →</button>
@@ -171,7 +187,7 @@
 
     <!-- STEP 3: DAMPAK & SUBMIT -->
     <div class="card step-content" id="step-3" style="display:none">
-      <div class="card-title" style="margin-bottom:18px">Dampak & Tindakan Awal</div>
+      <div class="card-title" style="margin-bottom:18px">Dampak & Analisis Teknis</div>
       <div class="form-group">
         <label class="form-label">Dampak yang Ditimbulkan <span class="req">*</span></label>
         <textarea name="dampak" class="form-control" rows="3" placeholder="Jelaskan dampak yang sudah atau berpotensi terjadi: data yang mungkin bocor, sistem yang terganggu, pengguna yang terdampak..." required></textarea>
@@ -179,6 +195,55 @@
       <div class="form-group">
         <label class="form-label">Tindakan Awal yang Sudah Dilakukan <span class="req">*</span></label>
         <textarea name="tindakan_awal" class="form-control" rows="3" placeholder="Jelaskan apa yang sudah Anda lakukan: tidak mengklik link, menutup telepon, mengisolasi komputer, mengganti password, dll." required></textarea>
+      </div>
+      
+      <hr style="margin:20px 0;border:none;border-top:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">Analisis Teknis (Opsional)</div>
+      
+      <div class="form-group">
+        <label class="form-label">Akar Masalah (Root Cause)</label>
+        <textarea name="akar_masalah" class="form-control" rows="3" placeholder="Analisis penyebab utama dari insiden ini"></textarea>
+      </div>
+      
+      <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px;margin-top:14px">Indikator (IOC / IOA)</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Hash</label>
+          <input type="text" name="ioc_hash" class="form-control" placeholder="MD5, SHA1, SHA256">
+        </div>
+        <div class="form-group">
+          <label class="form-label">IP / Domain</label>
+          <input type="text" name="ioc_ip_domain" class="form-control" placeholder="192.168.1.1, example.com">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Port / Media</label>
+        <input type="text" name="ioc_port_media" class="form-control" placeholder="80, 443, TCP, UDP">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Analisis Teknis</label>
+        <textarea name="analisis_teknis" class="form-control" rows="3" placeholder="Penjelasan teknis tentang bagaimana insiden terjadi"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Aksi SOC (Detection)</label>
+        <textarea name="aksi_soc" class="form-control" rows="2" placeholder="Tindakan deteksi yang dilakukan oleh SOC"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Aksi IR (Response)</label>
+        <textarea name="aksi_ir" class="form-control" rows="2" placeholder="Respon/tindakan perbaikan yang dilakukan"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Pemulihan</label>
+        <textarea name="pemulihan" class="form-control" rows="2" placeholder="Langkah pemulihan sistem setelah insiden"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Rekomendasi</label>
+        <textarea name="rekomendasi" class="form-control" rows="3" placeholder="Rekomendasi untuk mencegah insiden serupa di masa depan"></textarea>
       </div>
 
       <!-- RINGKASAN -->

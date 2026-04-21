@@ -248,6 +248,69 @@ def export_pdf(id):
         elements.append(Paragraph(insiden['tindakan_awal'], styles['Normal']))
         elements.append(Spacer(1, 0.15*inch))
         
+        if insiden.get('tim_csirt'):
+            elements.append(Paragraph("Tim CSIRT", styles['Heading2']))
+            elements.append(Paragraph(insiden['tim_csirt'], styles['Normal']))
+            elements.append(Spacer(1, 0.15*inch))
+        
+        if insiden.get('sistem_terdampak'):
+            elements.append(Paragraph("Sistem Terdampak", styles['Heading2']))
+            elements.append(Paragraph(insiden['sistem_terdampak'], styles['Normal']))
+            elements.append(Spacer(1, 0.15*inch))
+        
+        if insiden.get('ringkasan_insiden'):
+            elements.append(Paragraph("Ringkasan Insiden", styles['Heading2']))
+            elements.append(Paragraph(insiden['ringkasan_insiden'], styles['Normal']))
+            elements.append(Spacer(1, 0.15*inch))
+        
+        if insiden.get('kronologi'):
+            elements.append(Paragraph("Kronologi", styles['Heading2']))
+            elements.append(Paragraph(insiden['kronologi'], styles['Normal']))
+            elements.append(Spacer(1, 0.15*inch))
+        
+        if insiden.get('akar_masalah'):
+            elements.append(Paragraph("Akar Masalah (Root Cause)", styles['Heading2']))
+            elements.append(Paragraph(insiden['akar_masalah'], styles['Normal']))
+            elements.append(Spacer(1, 0.15*inch))
+        
+        # IOC Section
+        if insiden.get('ioc_hash') or insiden.get('ioc_ip_domain') or insiden.get('ioc_port_media'):
+            elements.append(Paragraph("Indikator (IOC / IOA)", styles['Heading2']))
+            ioc_content = ""
+            if insiden.get('ioc_hash'):
+                ioc_content += f"<b>Hash:</b> {insiden['ioc_hash']}<br/>"
+            if insiden.get('ioc_ip_domain'):
+                ioc_content += f"<b>IP/Domain:</b> {insiden['ioc_ip_domain']}<br/>"
+            if insiden.get('ioc_port_media'):
+                ioc_content += f"<b>Port / Media:</b> {insiden['ioc_port_media']}"
+            elements.append(Paragraph(ioc_content, styles['Normal']))
+            elements.append(Spacer(1, 0.15*inch))
+        
+        if insiden.get('analisis_teknis'):
+            elements.append(Paragraph("Analisis Teknis", styles['Heading2']))
+            elements.append(Paragraph(insiden['analisis_teknis'], styles['Normal']))
+            elements.append(Spacer(1, 0.15*inch))
+        
+        if insiden.get('aksi_soc'):
+            elements.append(Paragraph("Aksi SOC (Detection)", styles['Heading2']))
+            elements.append(Paragraph(insiden['aksi_soc'], styles['Normal']))
+            elements.append(Spacer(1, 0.15*inch))
+        
+        if insiden.get('aksi_ir'):
+            elements.append(Paragraph("Aksi IR (Response)", styles['Heading2']))
+            elements.append(Paragraph(insiden['aksi_ir'], styles['Normal']))
+            elements.append(Spacer(1, 0.15*inch))
+        
+        if insiden.get('pemulihan'):
+            elements.append(Paragraph("Pemulihan", styles['Heading2']))
+            elements.append(Paragraph(insiden['pemulihan'], styles['Normal']))
+            elements.append(Spacer(1, 0.15*inch))
+        
+        if insiden.get('rekomendasi'):
+            elements.append(Paragraph("Rekomendasi", styles['Heading2']))
+            elements.append(Paragraph(insiden['rekomendasi'], styles['Normal']))
+            elements.append(Spacer(1, 0.15*inch))
+        
         if insiden['catatan_admin']:
             elements.append(Paragraph("Catatan Admin", styles['Heading2']))
             elements.append(Paragraph(insiden['catatan_admin'], styles['Normal']))
@@ -302,6 +365,19 @@ def laporkan():
             'deskripsi':         request.form.get('deskripsi'),
             'dampak':            request.form.get('dampak'),
             'tindakan_awal':     request.form.get('tindakan_awal'),
+            'tim_csirt':         request.form.get('tim_csirt', ''),
+            'sistem_terdampak':  request.form.get('sistem_terdampak', ''),
+            'ringkasan_insiden': request.form.get('ringkasan_insiden', ''),
+            'kronologi':         request.form.get('kronologi', ''),
+            'akar_masalah':      request.form.get('akar_masalah', ''),
+            'ioc_hash':          request.form.get('ioc_hash', ''),
+            'ioc_ip_domain':     request.form.get('ioc_ip_domain', ''),
+            'ioc_port_media':    request.form.get('ioc_port_media', ''),
+            'analisis_teknis':   request.form.get('analisis_teknis', ''),
+            'aksi_soc':          request.form.get('aksi_soc', ''),
+            'aksi_ir':           request.form.get('aksi_ir', ''),
+            'pemulihan':         request.form.get('pemulihan', ''),
+            'rekomendasi':       request.form.get('rekomendasi', ''),
             'status':   'Menunggu',
             'severity': request.form.get('severity', 'Sedang'),
             'catatan_admin': '',

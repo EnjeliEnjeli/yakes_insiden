@@ -67,6 +67,86 @@
       </div>
     </div>
 
+    {% if insiden.get('tim_csirt') or insiden.get('sistem_terdampak') or insiden.get('ringkasan_insiden') or insiden.get('kronologi') %}
+    <div class="card fade-up fade-up-2" style="margin-bottom:16px">
+      <div class="card-title">Informasi Tambahan</div>
+      {% if insiden.get('tim_csirt') %}
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Tim CSIRT</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7">{{ insiden.tim_csirt }}</p>
+      </div>
+      {% endif %}
+      {% if insiden.get('sistem_terdampak') %}
+      <div style="margin-bottom:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Sistem Terdampak</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7">{{ insiden.sistem_terdampak }}</p>
+      </div>
+      {% endif %}
+      {% if insiden.get('ringkasan_insiden') %}
+      <div style="margin-bottom:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Ringkasan Insiden</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7">{{ insiden.ringkasan_insiden }}</p>
+      </div>
+      {% endif %}
+      {% if insiden.get('kronologi') %}
+      <div style="padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Kronologi</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7">{{ insiden.kronologi }}</p>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if insiden.get('akar_masalah') or insiden.get('ioc_hash') or insiden.get('ioc_ip_domain') or insiden.get('ioc_port_media') or insiden.get('analisis_teknis') or insiden.get('aksi_soc') or insiden.get('aksi_ir') or insiden.get('pemulihan') or insiden.get('rekomendasi') %}
+    <div class="card fade-up fade-up-2" style="margin-bottom:16px">
+      <div class="card-title">Analisis Teknis & Response</div>
+      {% if insiden.get('akar_masalah') %}
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Akar Masalah (Root Cause)</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7">{{ insiden.akar_masalah }}</p>
+      </div>
+      {% endif %}
+      {% if insiden.get('ioc_hash') or insiden.get('ioc_ip_domain') or insiden.get('ioc_port_media') %}
+      <div style="margin-bottom:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Indikator (IOC / IOA)</div>
+        {% if insiden.get('ioc_hash') %}<p style="font-size:12px;color:var(--text2)"><strong>Hash:</strong> {{ insiden.ioc_hash }}</p>{% endif %}
+        {% if insiden.get('ioc_ip_domain') %}<p style="font-size:12px;color:var(--text2)"><strong>IP/Domain:</strong> {{ insiden.ioc_ip_domain }}</p>{% endif %}
+        {% if insiden.get('ioc_port_media') %}<p style="font-size:12px;color:var(--text2)"><strong>Port/Media:</strong> {{ insiden.ioc_port_media }}</p>{% endif %}
+      </div>
+      {% endif %}
+      {% if insiden.get('analisis_teknis') %}
+      <div style="margin-bottom:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Analisis Teknis</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7">{{ insiden.analisis_teknis }}</p>
+      </div>
+      {% endif %}
+      {% if insiden.get('aksi_soc') %}
+      <div style="margin-bottom:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Aksi SOC (Detection)</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7">{{ insiden.aksi_soc }}</p>
+      </div>
+      {% endif %}
+      {% if insiden.get('aksi_ir') %}
+      <div style="margin-bottom:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Aksi IR (Response)</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7">{{ insiden.aksi_ir }}</p>
+      </div>
+      {% endif %}
+      {% if insiden.get('pemulihan') %}
+      <div style="margin-bottom:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Pemulihan</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7">{{ insiden.pemulihan }}</p>
+      </div>
+      {% endif %}
+      {% if insiden.get('rekomendasi') %}
+      <div style="padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Rekomendasi</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7">{{ insiden.rekomendasi }}</p>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
     {% if insiden.catatan_admin %}
     <div class="card fade-up fade-up-3" style="border-color:rgba(79,142,247,0.2)">
       <div class="card-title" style="color:var(--accent)">Catatan Penanganan Admin</div>

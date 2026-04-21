@@ -51,6 +51,36 @@
       </div>
     </div>
 
+    {% if insiden.get('tim_csirt') or insiden.get('sistem_terdampak') or insiden.get('ringkasan_insiden') or insiden.get('kronologi') %}
+    <div class="card fade-up fade-up-2" style="margin-bottom:16px">
+      <div class="card-title">Informasi Tambahan</div>
+      {% if insiden.get('tim_csirt') %}
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">Tim CSIRT</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7">{{ insiden.tim_csirt }}</p>
+      </div>
+      {% endif %}
+      {% if insiden.get('sistem_terdampak') %}
+      <div {% if insiden.get('tim_csirt') %}style="margin-bottom:14px;padding-top:14px;border-top:1px solid var(--border)"{% endif %}>
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">Sistem Terdampak</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7">{{ insiden.sistem_terdampak }}</p>
+      </div>
+      {% endif %}
+      {% if insiden.get('ringkasan_insiden') %}
+      <div style="padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">Ringkasan</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7">{{ insiden.ringkasan_insiden }}</p>
+      </div>
+      {% endif %}
+      {% if insiden.get('kronologi') %}
+      <div style="padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">Kronologi</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7">{{ insiden.kronologi }}</p>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
     {% if insiden.catatan_admin %}
     <div class="card fade-up fade-up-3" style="border-color:rgba(34,197,94,0.25)">
       <div class="card-title" style="color:var(--green)">
