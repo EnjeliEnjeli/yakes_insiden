@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% block title %}Laporkan Insiden — Yakes Telkom{% endblock %}
+
+{% block extra_style %}
+<style>
+  .step-bar { display:flex; gap:0; margin-bottom:28px; }
+  .step {
+    flex:1; text-align:center; padding:10px 0; font-size:12px; font-weight:500;
+    color:var(--text3); border-bottom:2px solid var(--border); transition:all 0.2s;
+    cursor:default;
+  }
+  .step.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .step.done   { color:var(--green);  border-bottom-color:var(--green); }
+  .step-num {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:20px; height:20px; border-radius:50%; font-size:11px; font-weight:600;
+    background:var(--bg3); color:var(--text3); margin-right:6px; transition:all 0.2s;
+  }
+  .step.active .step-num { background:var(--accent); color:#fff; }
+  .step.done   .step-num { background:var(--green);  color:#fff; }
+
+  .step-content { display:none; }
+  .step-content.active { display:block; }
+
+  .jenis-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+  .jenis-card {
+    padding:16px; border:1px solid var(--border); border-radius:var(--radius-lg);
+    cursor:pointer; transition:all 0.18s; position:relative;
+  }
+  .jenis-card:hover { border-color:var(--border2); background:var(--bg3); }
+  .jenis-card.selected { border-color:var(--accent); background:var(--blue-bg); }
+  .jenis-card input { position:absolute; opacity:0; width:0; height:0; }
+  .jenis-icon { font-size:20px; margin-bottom:8px; }
+  .jenis-name { font-size:13px; font-weight:600; color:var(--text); margin-bottom:3px; }
+  .jenis-desc { font-size:11px; color:var(--text3); line-height:1.5; }
+  .jenis-card.selected .jenis-name { color:var(--accent); }
+  .check-mark {
+    position:absolute; top:10px; right:10px; width:16px; height:16px;
+    border-radius:50%; background:var(--accent); color:#fff;
+    display:none; align-items:center; justify-content:center; font-size:10px;
+  }
+  .jenis-card.selected .check-mark { display:flex; }
+
+  .severity-row { display:flex; gap:10px; }
+  .sev-card {
+    flex:1; padding:12px; border:1px solid var(--border); border-radius:var(--radius);
+    cursor:pointer; text-align:center; transition:all 0.18s;
+  }
+  .sev-card:hover { border-color:var(--border2); }
+  .sev-card.selected-r { border-color:var(--red);   background:var(--red-bg);   }
+  .sev-card.selected-a { border-color:var(--amber); background:var(--amber-bg); }
+  .sev-card.selected-g { border-color:var(--green); background:var(--green-bg); }
+  .sev-card input { display:none; }
+  .sev-dot { width:10px; height:10px; border-radius:50%; margin:0 auto 6px; }
+
+  .nav-btns { display:flex; justify-content:space-between; margin-top:24px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header fade-up">
+  <div class="flex-between">
+    <div>
+      <div class="page-title">Laporkan Insiden Siber</div>
+      <div class="page-subtitle">Isi formulir berikut dengan informasi yang lengkap dan akurat</div>
+    </div>
+    <a href="{{ url_for('user_dashboard') }}" class="btn btn-ghost btn-sm">← Kembali</a>
+  </div>
+</div>
+
+<div style="max-width:680px">
+  <!-- STEP BAR -->
+  <div class="step-bar fade-up">
+    <div class="step active" id="step-indicator-1"><span class="step-num">1</span>Jenis Insiden</div>
+    <div class="step" id="step-indicator-2"><span class="step-num">2</span>Detail Kejadian</div>
+    <div class="step" id="step-indicator-3"><span class="step-num">3</span>Dampak & Tindakan</div>
+  </div>
+
+  <form method="POST" action="{{ url_for('laporkan') }}" id="mainForm">
+
+    <!-- STEP 1: JENIS -->
+    <div class="card step-content active fade-up fade-up-1" id="step-1">
+      <div class="card-title" style="margin-bottom:18px">Pilih Jenis Insiden</div>
+      <div class="jenis-grid">
+        <label class="jenis-card" onclick="selectJenis(this,'Phishing SMS')">
+          <input type="radio" name="jenis" value="Phishing SMS">
+          <div class="check-mark">✓</div>
+          <div class="jenis-icon">📱</div>
+          <div class="jenis-name">Phishing SMS</div>
+          <div class="jenis-desc">SMS mencurigakan berisi link palsu atau permintaan data sensitif</div>
+        </label>
+        <label class="jenis-card" onclick="selectJenis(this,'Vishing')">
+          <input type="radio" name="jenis" value="Vishing">
+          <div class="check-mark">✓</div>
+          <div class="jenis-icon">📞</div>
+          <div class="jenis-name">Vishing</div>
+          <div class="jenis-desc">Panggilan telepon penipuan yang meminta informasi sensitif atau akses sistem</div>
+        </label>
+        <label class="jenis-card" onclick="selectJenis(this,'Worm')">
+          <input type="radio" name="jenis" value="Worm">
+          <div class="check-mark">✓</div>
+          <div class="jenis-icon">🪱</div>
+          <div class="jenis-name">Worm</div>
+          <div class="jenis-desc">Program berbahaya yang menyebar otomatis melalui jaringan komputer</div>
+        </label>
+        <label class="jenis-card" onclick="selectJenis(this,'DoS/DDoS')">
+          <input type="radio" name="jenis" value="DoS/DDoS">
+          <div class="check-mark">✓</div>
+          <div class="jenis-icon">⚡</div>
+          <div class="jenis-name">DoS / DDoS</div>
+          <div class="jenis-desc">Serangan yang membuat layanan tidak bisa diakses dengan membanjiri traffic</div>
+        </label>
+      </div>
+      <p id="jenis-error" style="color:var(--red);font-size:12px;margin-top:10px;display:none">Silakan pilih jenis insiden terlebih dahulu.</p>
+      <div class="nav-btns">
+        <div></div>
+        <button type="button" class="btn btn-primary" onclick="goStep(2)">Lanjutkan →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: DETAIL -->
+    <div class="card step-content" id="step-2" style="display:none">
+      <div class="card-title" style="margin-bottom:18px">Detail Kejadian</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tanggal Kejadian <span class="req">*</span></label>
+          <input type="date" name="tanggal" class="form-control" value="{{ today }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jam Kejadian <span class="req">*</span></label>
+          <input type="time" name="jam" class="form-control" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Lokasi Kejadian <span class="req">*</span></label>
+        <input type="text" name="lokasi" class="form-control" placeholder="Contoh: Kantor Pusat Bandung, Lt. 3" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tingkat Keparahan <span class="req">*</span></label>
+        <div class="severity-row">
+          <label class="sev-card" id="sev-tinggi" onclick="selectSev('Tinggi')">
+            <input type="radio" name="severity" value="Tinggi">
+            <div class="sev-dot" style="background:var(--red)"></div>
+            <div style="font-size:12px;font-weight:600;color:var(--red)">Tinggi</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px">Dampak besar</div>
+          </label>
+          <label class="sev-card" id="sev-sedang" onclick="selectSev('Sedang')">
+            <input type="radio" name="severity" value="Sedang">
+            <div class="sev-dot" style="background:var(--amber)"></div>
+            <div style="font-size:12px;font-weight:600;color:var(--amber)">Sedang</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px">Dampak terbatas</div>
+          </label>
+          <label class="sev-card" id="sev-rendah" onclick="selectSev('Rendah')">
+            <input type="radio" name="severity" value="Rendah">
+            <div class="sev-dot" style="background:var(--green)"></div>
+            <div style="font-size:12px;font-weight:600;color:var(--green)">Rendah</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px">Dampak minimal</div>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Deskripsi Kejadian <span class="req">*</span></label>
+        <textarea name="deskripsi" class="form-control" rows="4" placeholder="Jelaskan kejadian secara detail: apa yang terjadi, bagaimana cara penyerang, informasi apa yang diminta/diakses..." required></textarea>
+        <div class="form-hint">Semakin detail semakin membantu tim IT untuk menangani insiden.</div>
+      </div>
+      <div class="nav-btns">
+        <button type="button" class="btn btn-ghost" onclick="goStep(1)">← Kembali</button>
+        <button type="button" class="btn btn-primary" onclick="goStep(3)">Lanjutkan →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: DAMPAK & SUBMIT -->
+    <div class="card step-content" id="step-3" style="display:none">
+      <div class="card-title" style="margin-bottom:18px">Dampak & Tindakan Awal</div>
+      <div class="form-group">
+        <label class="form-label">Dampak yang Ditimbulkan <span class="req">*</span></label>
+        <textarea name="dampak" class="form-control" rows="3" placeholder="Jelaskan dampak yang sudah atau berpotensi terjadi: data yang mungkin bocor, sistem yang terganggu, pengguna yang terdampak..." required></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tindakan Awal yang Sudah Dilakukan <span class="req">*</span></label>
+        <textarea name="tindakan_awal" class="form-control" rows="3" placeholder="Jelaskan apa yang sudah Anda lakukan: tidak mengklik link, menutup telepon, mengisolasi komputer, mengganti password, dll." required></textarea>
+      </div>
+
+      <!-- RINGKASAN -->
+      <div id="summary" style="margin-top:20px;padding:14px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px">Ringkasan Laporan</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+          <div><span style="color:var(--text3)">Pelapor:</span> <span id="s-pelapor" style="color:var(--text)">{{ session.nama }}</span></div>
+          <div><span style="color:var(--text3)">Jenis:</span> <span id="s-jenis" style="color:var(--accent)">-</span></div>
+        </div>
+      </div>
+
+      <div class="nav-btns">
+        <button type="button" class="btn btn-ghost" onclick="goStep(2)">← Kembali</button>
+        <button type="submit" class="btn btn-primary">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 3L6 10l-3-3"/></svg>
+          Kirim Laporan
+        </button>
+      </div>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedJenis = '';
+let selectedSev   = '';
+
+function selectJenis(el, val) {
+  document.querySelectorAll('.jenis-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  el.querySelector('input').checked = true;
+  selectedJenis = val;
+  document.getElementById('s-jenis').textContent = val;
+  document.getElementById('jenis-error').style.display = 'none';
+}
+
+function selectSev(val) {
+  selectedSev = val;
+  document.querySelectorAll('.sev-card').forEach(c => {
+    c.classList.remove('selected-r','selected-a','selected-g');
+  });
+  const map = { Tinggi:'selected-r', Sedang:'selected-a', Rendah:'selected-g' };
+  document.getElementById('sev-' + val.toLowerCase()).classList.add(map[val]);
+  document.querySelector(`input[name=severity][value="${val}"]`).checked = true;
+}
+
+function goStep(n) {
+  if (n === 2 && !selectedJenis) {
+    document.getElementById('jenis-error').style.display = 'block';
+    return;
+  }
+  // Show/hide steps
+  [1,2,3].forEach(i => {
+    const el = document.getElementById('step-' + i);
+    el.style.display = (i === n) ? 'block' : 'none';
+    el.classList.toggle('active', i === n);
+    const ind = document.getElementById('step-indicator-' + i);
+    ind.className = 'step' + (i === n ? ' active' : (i < n ? ' done' : ''));
+  });
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+</script>
+{% endblock %}

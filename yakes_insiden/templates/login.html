@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Sistem Insiden Siber Yakes Telkom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d0f14; --bg2: #13161d; --bg3: #1a1e27;
+      --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+      --text: #e8eaf0; --text2: #8b90a0; --text3: #555a6a;
+      --accent: #4f8ef7; --accent2: #2563eb;
+      --red: #ef4444; --red-bg: rgba(239,68,68,0.12);
+      --font: 'DM Sans', sans-serif;
+    }
+    body {
+      font-family: var(--font); background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    }
+    /* Subtle grid bg */
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(79,142,247,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79,142,247,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .container { position: relative; z-index: 1; width: 100%; max-width: 380px; padding: 20px; }
+
+    .brand { text-align: center; margin-bottom: 32px; }
+    .brand-mark {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 48px; height: 48px; border-radius: 12px;
+      background: var(--accent); color: #fff; font-size: 18px; font-weight: 700;
+      margin-bottom: 14px; box-shadow: 0 0 40px rgba(79,142,247,0.3);
+    }
+    .brand h1 { font-size: 18px; font-weight: 600; color: var(--text); }
+    .brand p  { font-size: 13px; color: var(--text3); margin-top: 4px; }
+
+    .login-card {
+      background: var(--bg2); border: 1px solid var(--border2);
+      border-radius: 16px; padding: 28px;
+    }
+    .card-title { font-size: 15px; font-weight: 600; margin-bottom: 20px; color: var(--text); }
+
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 7px; }
+    .form-control {
+      width: 100%; padding: 10px 13px;
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 9px; color: var(--text); font-size: 13px;
+      font-family: var(--font); outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+    .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,142,247,0.15); }
+    .form-control::placeholder { color: var(--text3); }
+
+    .btn-login {
+      width: 100%; padding: 11px; border-radius: 9px;
+      background: var(--accent); color: #fff; font-size: 14px; font-weight: 600;
+      border: none; cursor: pointer; font-family: var(--font);
+      transition: background 0.18s, transform 0.1s;
+      margin-top: 8px;
+    }
+    .btn-login:hover { background: var(--accent2); }
+    .btn-login:active { transform: scale(0.98); }
+
+    .alert-error {
+      background: var(--red-bg); color: var(--red);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 8px; padding: 10px 13px;
+      font-size: 13px; margin-bottom: 16px;
+    }
+
+    .demo-accounts {
+      margin-top: 20px; padding: 14px;
+      background: var(--bg3); border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .demo-title { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+    .demo-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; padding: 5px 0; border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .demo-row:last-child { border-bottom: none; }
+    .demo-row:hover .demo-cred { color: var(--accent); }
+    .demo-role { color: var(--text2); }
+    .demo-cred { font-family: 'DM Mono', monospace; color: var(--text3); font-size: 11px; transition: color 0.15s; }
+    .demo-hint { font-size: 10px; color: var(--text3); margin-top: 8px; text-align: center; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .container { animation: fadeIn 0.4s ease; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="brand">
+    <div class="brand-mark">YT</div>
+    <h1>Yakes Telkom</h1>
+    <p>Sistem Pelaporan Insiden Keamanan Siber</p>
+  </div>
+
+  <div class="login-card">
+    <div class="card-title">Masuk ke Sistem</div>
+
+    {% if error %}
+    <div class="alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-control" placeholder="Masukkan username" required autofocus>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" placeholder="Masukkan password" required>
+      </div>
+      <button type="submit" class="btn-login">Masuk</button>
+    </form>
+  </div>
+
+  <div class="demo-accounts">
+    <div class="demo-title">Akun Demo</div>
+    <div class="demo-row" onclick="fillLogin('admin','admin123')">
+      <span class="demo-role">Administrator</span>
+      <span class="demo-cred">admin / admin123</span>
+    </div>
+    <div class="demo-row" onclick="fillLogin('budi','budi123')">
+      <span class="demo-role">Pelapor — Budi Santoso</span>
+      <span class="demo-cred">budi / budi123</span>
+    </div>
+    <div class="demo-row" onclick="fillLogin('siti','siti123')">
+      <span class="demo-role">Pelapor — Siti Rahayu</span>
+      <span class="demo-cred">siti / siti123</span>
+    </div>
+    <div class="demo-hint">Klik baris untuk mengisi form otomatis</div>
+  </div>
+</div>
+<script>
+function fillLogin(u, p) {
+  document.querySelector('[name=username]').value = u;
+  document.querySelector('[name=password]').value = p;
+}
+</script>
+</body>
+</html>

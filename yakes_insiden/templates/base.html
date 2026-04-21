@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Sistem Insiden Siber — Yakes Telkom{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d0f14;
+      --bg2:      #13161d;
+      --bg3:      #1a1e27;
+      --border:   rgba(255,255,255,0.07);
+      --border2:  rgba(255,255,255,0.12);
+      --text:     #e8eaf0;
+      --text2:    #8b90a0;
+      --text3:    #555a6a;
+      --accent:   #4f8ef7;
+      --accent2:  #2563eb;
+      --red:      #ef4444;
+      --red-bg:   rgba(239,68,68,0.12);
+      --amber:    #f59e0b;
+      --amber-bg: rgba(245,158,11,0.12);
+      --green:    #22c55e;
+      --green-bg: rgba(34,197,94,0.12);
+      --blue-bg:  rgba(79,142,247,0.12);
+      --radius:   10px;
+      --radius-lg:14px;
+      --sidebar:  220px;
+      --font:     'DM Sans', sans-serif;
+      --mono:     'DM Mono', monospace;
+      --trans:    0.18s ease;
+    }
+
+    html, body { height: 100%; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
+
+    /* ── LAYOUT ── */
+    .app-layout { display: flex; min-height: 100vh; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar); flex-shrink: 0;
+      background: var(--bg2); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+    }
+    .sidebar-logo {
+      padding: 20px 18px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-logo .logo-mark {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--accent); color: #fff;
+      font-size: 13px; font-weight: 600; margin-bottom: 10px;
+    }
+    .sidebar-logo h2 { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; }
+    .sidebar-logo p  { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+    .sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+    .nav-section-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+      color: var(--text3); padding: 10px 18px 4px; text-transform: uppercase;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 18px; font-size: 13px; color: var(--text2);
+      text-decoration: none; border-left: 2px solid transparent;
+      transition: all var(--trans); cursor: pointer;
+    }
+    .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--blue-bg); font-weight: 500; }
+    .nav-icon { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
+    .nav-item.active .nav-icon { opacity: 1; }
+    .nav-badge {
+      margin-left: auto; font-size: 10px; font-weight: 600;
+      background: var(--red-bg); color: var(--red);
+      padding: 1px 6px; border-radius: 20px;
+    }
+
+    .sidebar-footer {
+      padding: 14px 18px; border-top: 1px solid var(--border);
+    }
+    .user-info { display: flex; align-items: center; gap: 10px; }
+    .avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--blue-bg); border: 1px solid var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600; color: var(--accent); flex-shrink: 0;
+    }
+    .user-name  { font-size: 12px; font-weight: 500; color: var(--text); }
+    .user-role  { font-size: 10px; color: var(--text3); }
+    .logout-btn {
+      margin-left: auto; font-size: 11px; color: var(--text3);
+      text-decoration: none; padding: 3px 7px; border: 1px solid var(--border2);
+      border-radius: 5px; transition: all var(--trans);
+    }
+    .logout-btn:hover { color: var(--red); border-color: var(--red); }
+
+    /* ── MAIN ── */
+    .main-content {
+      margin-left: var(--sidebar); flex: 1;
+      padding: 28px 32px; min-height: 100vh;
+    }
+    .page-header { margin-bottom: 24px; }
+    .page-title { font-size: 20px; font-weight: 600; color: var(--text); }
+    .page-subtitle { font-size: 13px; color: var(--text2); margin-top: 3px; }
+
+    /* ── STAT CARDS ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+    .stat-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 16px 18px;
+      transition: border-color var(--trans);
+    }
+    .stat-card:hover { border-color: var(--border2); }
+    .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: 600; line-height: 1; }
+    .stat-delta { font-size: 11px; color: var(--text3); margin-top: 6px; }
+    .stat-value.red    { color: var(--red); }
+    .stat-value.amber  { color: var(--amber); }
+    .stat-value.green  { color: var(--green); }
+    .stat-value.blue   { color: var(--accent); }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 20px;
+    }
+    .card-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 16px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+
+    /* ── TABLE ── */
+    .table-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 20px; }
+    .table-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .table-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left; padding: 10px 16px;
+      font-size: 10px; font-weight: 600; color: var(--text3);
+      text-transform: uppercase; letter-spacing: 0.07em;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg3);
+    }
+    td { padding: 11px 16px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .id-cell { font-family: var(--mono); font-size: 12px; color: var(--text3); }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600; padding: 3px 9px;
+      border-radius: 20px; white-space: nowrap;
+    }
+    .badge-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+    .badge.red    { background: var(--red-bg);   color: var(--red);   }
+    .badge.amber  { background: var(--amber-bg); color: var(--amber); }
+    .badge.green  { background: var(--green-bg); color: var(--green); }
+    .badge.blue   { background: var(--blue-bg);  color: var(--accent); }
+    .badge.gray   { background: rgba(255,255,255,0.07); color: var(--text2); }
+    .badge.red   .badge-dot { background: var(--red); }
+    .badge.amber .badge-dot { background: var(--amber); }
+    .badge.green .badge-dot { background: var(--green); }
+    .badge.blue  .badge-dot { background: var(--accent); }
+    .badge.gray  .badge-dot { background: var(--text3); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 8px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 500;
+      border: 1px solid var(--border2); cursor: pointer; text-decoration: none;
+      transition: all var(--trans); font-family: var(--font);
+    }
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-primary:hover { background: var(--accent2); border-color: var(--accent2); }
+    .btn-ghost { background: transparent; color: var(--text2); }
+    .btn-ghost:hover { background: var(--bg3); color: var(--text); }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-danger { background: var(--red-bg); color: var(--red); border-color: rgba(239,68,68,0.3); }
+
+    /* ── FORMS ── */
+    .form-group { margin-bottom: 18px; }
+    .form-label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 7px; letter-spacing: 0.02em; }
+    .form-label .req { color: var(--red); margin-left: 2px; }
+    .form-control {
+      width: 100%; padding: 9px 12px;
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: var(--radius); color: var(--text);
+      font-size: 13px; font-family: var(--font);
+      transition: border-color var(--trans), box-shadow var(--trans);
+      outline: none;
+    }
+    .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,142,247,0.15); }
+    .form-control::placeholder { color: var(--text3); }
+    select.form-control { cursor: pointer; }
+    textarea.form-control { resize: vertical; min-height: 90px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-hint { font-size: 11px; color: var(--text3); margin-top: 5px; }
+
+    /* ── ALERTS ── */
+    .alert { padding: 11px 16px; border-radius: var(--radius); font-size: 13px; margin-bottom: 16px; border: 1px solid; }
+    .alert-success { background: var(--green-bg); color: var(--green); border-color: rgba(34,197,94,0.3); }
+    .alert-error   { background: var(--red-bg);   color: var(--red);   border-color: rgba(239,68,68,0.3); }
+
+    /* ── BAR CHART ── */
+    .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .bar-label { font-size: 12px; color: var(--text2); width: 90px; flex-shrink: 0; }
+    .bar-track { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+    .bar-fill  { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(.4,0,.2,1); }
+    .bar-count { font-size: 12px; color: var(--text3); width: 20px; text-align: right; flex-shrink: 0; }
+
+    /* ── TIMELINE ── */
+    .timeline { padding: 4px 0; }
+    .tl-item { display: flex; gap: 14px; padding-bottom: 18px; position: relative; }
+    .tl-item:last-child { padding-bottom: 0; }
+    .tl-item:not(:last-child)::before {
+      content: ''; position: absolute; left: 7px; top: 16px; bottom: 0;
+      width: 1px; background: var(--border);
+    }
+    .tl-dot { width: 15px; height: 15px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; border: 2px solid var(--bg2); }
+    .tl-content .tl-date { font-size: 11px; color: var(--text3); margin-bottom: 2px; }
+    .tl-content .tl-text { font-size: 13px; color: var(--text2); }
+
+    /* ── DETAIL VIEW ── */
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .detail-section { margin-bottom: 20px; }
+    .detail-section-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px; }
+    .detail-row { display: flex; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-key { width: 140px; flex-shrink: 0; color: var(--text3); }
+    .detail-val { color: var(--text); }
+
+    /* ── MISC ── */
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .flex-gap { display: flex; align-items: center; gap: 10px; }
+    .search-input {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 7px 12px; font-size: 12px; color: var(--text); font-family: var(--font);
+      outline: none; width: 200px; transition: border-color var(--trans);
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--text3); }
+    .empty-state { text-align: center; padding: 48px 20px; color: var(--text3); }
+    .empty-state p { font-size: 13px; margin-top: 8px; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-up { animation: fadeUp 0.3s ease forwards; }
+    .fade-up-1 { animation-delay: 0.05s; opacity: 0; }
+    .fade-up-2 { animation-delay: 0.1s;  opacity: 0; }
+    .fade-up-3 { animation-delay: 0.15s; opacity: 0; }
+    .fade-up-4 { animation-delay: 0.2s;  opacity: 0; }
+  </style>
+  {% block extra_style %}{% endblock %}
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">YT</div>
+      <h2>Yakes Telkom</h2>
+      <p>Sistem Insiden Siber</p>
+    </div>
+    <nav class="sidebar-nav">
+      {% if session.role == 'admin' %}
+        <div class="nav-section-label">Admin</div>
+        <a href="{{ url_for('admin_dashboard') }}" class="nav-item {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+          Dashboard
+        </a>
+        <a href="{{ url_for('admin_dashboard') }}#tabel" class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+          Semua Laporan
+          {% set menunggu = insiden_list|selectattr('status','eq','Menunggu')|list|length if insiden_list is defined else 0 %}
+          {% if menunggu > 0 %}<span class="nav-badge">{{ menunggu }}</span>{% endif %}
+        </a>
+      {% else %}
+        <div class="nav-section-label">Menu</div>
+        <a href="{{ url_for('user_dashboard') }}" class="nav-item {% if request.endpoint == 'user_dashboard' %}active{% endif %}">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+          Dashboard Saya
+        </a>
+        <a href="{{ url_for('laporkan') }}" class="nav-item {% if request.endpoint == 'laporkan' %}active{% endif %}">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3v10M3 8h10"/></svg>
+          Laporkan Insiden
+        </a>
+      {% endif %}
+      <div class="nav-section-label" style="margin-top:8px">Panduan</div>
+      <div class="nav-item" style="opacity:0.6;font-size:12px;">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M6 8h4M8 6v4"/></svg>
+        Worm
+      </div>
+      <div class="nav-item" style="opacity:0.6;font-size:12px;">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M8 3l5 5-5 5"/></svg>
+        DoS / DDoS
+      </div>
+      <div class="nav-item" style="opacity:0.6;font-size:12px;">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M2 7h12"/></svg>
+        Phishing
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar">{{ session.nama[:2].upper() }}</div>
+        <div>
+          <div class="user-name">{{ session.nama }}</div>
+          <div class="user-role">{{ 'Administrator' if session.role == 'admin' else 'Pelapor' }}</div>
+        </div>
+        <a href="{{ url_for('logout') }}" class="logout-btn">Keluar</a>
+      </div>
+    </div>
+  </aside>
+  <main class="main-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, msg in messages %}
+        <div class="alert alert-{{ category }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% block scripts %}{% endblock %}
+</body>
+</html>
