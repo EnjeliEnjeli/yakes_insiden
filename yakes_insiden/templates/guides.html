@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Panduan Insiden — Yakes Telkom{% endblock %}
+
+{% block extra_style %}
+<style>
+  .guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .guide-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    text-align: center;
+    transition: all var(--trans);
+  }
+  .guide-card:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(51,102,204,0.1); }
+  .guide-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    display: block;
+  }
+  .guide-name { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .guide-desc { font-size: 12px; color: var(--text3); margin-bottom: 16px; line-height: 1.6; }
+  .guide-status {
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 14px;
+  }
+  .guide-date { font-size: 10px; color: var(--text3); margin-top: 8px; }
+  .empty-guide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    color: var(--text3);
+    font-size: 12px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header fade-up">
+  <div class="flex-between">
+    <div>
+      <div class="page-title">Panduan Insiden Siber</div>
+      <div class="page-subtitle">Panduan penanganan berbagai jenis insiden keamanan</div>
+    </div>
+    <a href="{{ url_for('user_dashboard') }}" class="btn btn-ghost btn-sm">← Kembali</a>
+  </div>
+</div>
+
+<!-- GUIDES GRID -->
+<div class="guide-grid fade-up">
+  <!-- WORM -->
+  <div class="guide-card fade-up-1">
+    <div class="guide-icon">🦠</div>
+    <div class="guide-name">Worm</div>
+    <div class="guide-desc">Panduan penanganan infeksi worm dan malware yang menyebar di jaringan</div>
+    {% if guides['Worm']['filename'] %}
+      <div class="guide-status">
+        ✓ Tersedia
+        <div class="guide-date">Diupdate: {{ guides['Worm']['uploaded_date'] }}</div>
+      </div>
+      <a href="{{ url_for('download_guide', guide_type='Worm') }}" class="btn btn-primary btn-sm" style="width:100%">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12h8M8 3v7M5 7l3 3 3-3"/></svg>
+        Unduh Panduan
+      </a>
+    {% else %}
+      <div class="guide-status">⊘ Belum tersedia</div>
+      <div class="empty-guide">Panduan belum diunggah oleh admin</div>
+    {% endif %}
+  </div>
+
+  <!-- DOS/DDOS -->
+  <div class="guide-card fade-up-2">
+    <div class="guide-icon">📡</div>
+    <div class="guide-name">DoS / DDoS</div>
+    <div class="guide-desc">Panduan penanganan serangan Denial of Service dan DDoS pada infrastruktur</div>
+    {% if guides['DoS/DDoS']['filename'] %}
+      <div class="guide-status">
+        ✓ Tersedia
+        <div class="guide-date">Diupdate: {{ guides['DoS/DDoS']['uploaded_date'] }}</div>
+      </div>
+      <a href="{{ url_for('download_guide', guide_type='DoS/DDoS') }}" class="btn btn-primary btn-sm" style="width:100%">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12h8M8 3v7M5 7l3 3 3-3"/></svg>
+        Unduh Panduan
+      </a>
+    {% else %}
+      <div class="guide-status">⊘ Belum tersedia</div>
+      <div class="empty-guide">Panduan belum diunggah oleh admin</div>
+    {% endif %}
+  </div>
+
+  <!-- PHISHING -->
+  <div class="guide-card fade-up-3">
+    <div class="guide-icon">🎣</div>
+    <div class="guide-name">Phishing / Vishing</div>
+    <div class="guide-desc">Panduan penanganan phishing email, SMS, dan vishing call</div>
+    {% if guides['Phishing']['filename'] %}
+      <div class="guide-status">
+        ✓ Tersedia
+        <div class="guide-date">Diupdate: {{ guides['Phishing']['uploaded_date'] }}</div>
+      </div>
+      <a href="{{ url_for('download_guide', guide_type='Phishing') }}" class="btn btn-primary btn-sm" style="width:100%">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12h8M8 3v7M5 7l3 3 3-3"/></svg>
+        Unduh Panduan
+      </a>
+    {% else %}
+      <div class="guide-status">⊘ Belum tersedia</div>
+      <div class="empty-guide">Panduan belum diunggah oleh admin</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- INFO CARD -->
+<div class="card fade-up" style="margin-top: 24px; background: var(--blue-bg); border-color: var(--accent)">
+  <div style="color: var(--accent); font-size: 13px; font-weight: 600; margin-bottom: 8px">ℹ️ Informasi</div>
+  <div style="color: var(--text2); font-size: 13px; line-height: 1.6">
+    Panduan ini berisi prosedur standar untuk penanganan berbagai jenis insiden keamanan siber. 
+    Silakan baca panduan yang relevan dengan jenis insiden yang akan Anda laporkan untuk memastikan informasi yang akurat dan lengkap.
+  </div>
+</div>
+
+{% endblock %}

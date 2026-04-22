@@ -81,6 +81,22 @@
       background: var(--red-bg); color: var(--red);
       padding: 1px 6px; border-radius: 20px;
     }
+    
+    /* Submenu styles */
+    .nav-submenu { display: none; flex-direction: column; }
+    .nav-submenu.open { display: flex; }
+    .nav-submenu-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 18px 6px 35px; font-size: 12px; color: var(--text2);
+      text-decoration: none; transition: all var(--trans); cursor: pointer;
+    }
+    .nav-submenu-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+    .nav-submenu-item.active { color: var(--accent); font-weight: 500; }
+    .nav-expand-icon { 
+      width: 14px; height: 14px; transition: transform var(--trans); 
+      flex-shrink: 0; margin-left: auto;
+    }
+    .nav-item.expanded .nav-expand-icon { transform: rotate(90deg); }
 
     .sidebar-footer {
       padding: 14px 18px; border-top: 1px solid var(--border);
@@ -291,18 +307,23 @@
         </a>
       {% endif %}
       <div class="nav-section-label" style="margin-top:8px">Panduan</div>
-      <div class="nav-item" style="opacity:0.6;font-size:12px;">
-        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M6 8h4M8 6v4"/></svg>
-        Worm
+      <div class="nav-item" onclick="toggleSubmenu(event)" style="cursor:pointer">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4"/><path d="M2 4l6-2 6 2"/></svg>
+        Panduan
+        <svg class="nav-expand-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l4 4-4 4"/></svg>
       </div>
-      <div class="nav-item" style="opacity:0.6;font-size:12px;">
-        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M8 3l5 5-5 5"/></svg>
-        DoS / DDoS
+      <div class="nav-submenu" id="submenu-panduan">
+        <a href="{{ url_for('download_guide', guide_type='Phishing') }}" class="nav-submenu-item">🎣 Phishing</a>
+        <a href="{{ url_for('download_guide', guide_type='Worm') }}" class="nav-submenu-item">🦠 Worm</a>
+        <a href="{{ url_for('download_guide', guide_type='DoS/DDoS') }}" class="nav-submenu-item">📡 DoS/DDoS</a>
+        <a href="{{ url_for('view_guides') }}" class="nav-submenu-item" style="border-top: 1px solid var(--border); margin-top: 4px; padding-top: 10px; font-weight: 500;">📖 Lihat Semua</a>
       </div>
-      <div class="nav-item" style="opacity:0.6;font-size:12px;">
-        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M2 7h12"/></svg>
-        Phishing
-      </div>
+      {% if session.role == 'admin' %}
+        <a href="{{ url_for('admin_guides') }}" class="nav-item {% if request.endpoint == 'admin_guides' %}active{% endif %}">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 9v3M10.5 10.5h3"/><path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4"/><path d="M2 4l6-2 6 2"/></svg>
+          Kelola Panduan
+        </a>
+      {% endif %}
     </nav>
     <div class="sidebar-footer">
       <div class="user-info">
@@ -325,5 +346,23 @@
   </main>
 </div>
 {% block scripts %}{% endblock %}
+<script>
+function toggleSubmenu(event) {
+  const navItem = event.currentTarget;
+  const submenu = document.getElementById('submenu-panduan');
+  
+  navItem.classList.toggle('expanded');
+  submenu.classList.toggle('open');
+}
+
+// Close submenu on window load
+document.addEventListener('DOMContentLoaded', function() {
+  const submenu = document.getElementById('submenu-panduan');
+  if (submenu) {
+    submenu.classList.add('open');
+    document.querySelector('[onclick="toggleSubmenu(event)"]').classList.add('expanded');
+  }
+});
+</script>
 </body>
 </html>

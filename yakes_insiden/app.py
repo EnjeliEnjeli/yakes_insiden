@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request, session, make_response, flash
+from flask import Flask, render_template, redirect, url_for, request, session, make_response, flash, send_file
 from datetime import datetime
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
@@ -6,10 +6,24 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib import colors
+from werkzeug.utils import secure_filename
 import json, os
+from pathlib import Path
 
 app = Flask(__name__)
 app.secret_key = 'yakes-telkom-secret-2025'
+
+# ─── Uploads directory ────────────────────────────────────────────────────────
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
+ALLOWED_EXTENSIONS = {'pdf'}
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
+
+def allowed_file(filename):
+    """Check if file extension is allowed"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # ─── In-memory database (ganti dengan SQLite/PostgreSQL untuk produksi) ───────
 users = {
@@ -77,6 +91,13 @@ insiden_db = [
 ]
 
 next_id = [6]
+
+# ─── Guides database (stored with filename, type, upload date) ────────────────
+guides_db = {
+    'Worm': {'filename': None, 'uploaded_date': None, 'description': 'Panduan penanganan Worm'},
+    'DoS/DDoS': {'filename': None, 'uploaded_date': None, 'description': 'Panduan penanganan DoS/DDoS'},
+    'Phishing': {'filename': None, 'uploaded_date': None, 'description': 'Panduan penanganan Phishing/Vishing'},
+}
 
 
 def login_required(f):
@@ -398,6 +419,95 @@ def user_detail(id):
         flash('Anda tidak memiliki akses ke insiden ini.', 'error')
         return redirect(url_for('user_dashboard'))
     return render_template('user_detail.html', insiden=insiden)
+
+
+# ─── GUIDES (Panduan) ─────────────────────────────────────────────────────────
+@app.route('/guides', methods=['GET'])
+@login_required
+def view_guides():
+    """View all available guides for users"""
+    guides = guides_db
+    return render_template('guides.html', guides=guides)
+
+
+@app.route('/admin/guides', methods=['GET', 'POST'])
+@admin_required
+def admin_guides():
+    """Admin panel for managing guides (upload/delete)"""
+    if request.method == 'POST':
+        guide_type = request.form.get('guide_type')
+        
+        if 'file' not in request.files:
+            flash('Tidak ada file yang dipilih.', 'error')
+            return redirect(url_for('admin_guides'))
+        
+        file = request.files['file']
+        
+        if file.filename == '':
+            flash('Tidak ada file yang dipilih.', 'error')
+            return redirect(url_for('admin_guides'))
+        
+        if file and allowed_file(file.filename) and guide_type in guides_db:
+            # Delete old file if exists
+            if guides_db[guide_type]['filename']:
+                old_path = os.path.join(app.config['UPLOAD_FOLDER'], guides_db[guide_type]['filename'])
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+            
+            # Save new file with secure name
+            filename = secure_filename(f"{guide_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf")
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            
+            guides_db[guide_type]['filename'] = filename
+            guides_db[guide_type]['uploaded_date'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            
+            flash(f'Panduan "{guide_type}" berhasil diunggah!', 'success')
+            return redirect(url_for('admin_guides'))
+        else:
+            flash('File harus berupa PDF.', 'error')
+            return redirect(url_for('admin_guides'))
+    
+    return render_template('admin_guides.html', guides=guides_db)
+
+
+@app.route('/admin/guides/<guide_type>/delete', methods=['POST'])
+@admin_required
+def delete_guide(guide_type):
+    """Admin delete guide"""
+    if guide_type in guides_db and guides_db[guide_type]['filename']:
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], guides_db[guide_type]['filename'])
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        guides_db[guide_type]['filename'] = None
+        guides_db[guide_type]['uploaded_date'] = None
+        flash(f'Panduan "{guide_type}" berhasil dihapus.', 'success')
+    return redirect(url_for('admin_guides'))
+
+
+@app.route('/guides/<guide_type>/download')
+@login_required
+def download_guide(guide_type):
+    """Download guide PDF"""
+    if guide_type not in guides_db or not guides_db[guide_type]['filename']:
+        flash('Panduan tidak tersedia.', 'error')
+        return redirect(url_for('view_guides'))
+    
+    try:
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], guides_db[guide_type]['filename'])
+        if not os.path.exists(filepath):
+            flash('File tidak ditemukan.', 'error')
+            return redirect(url_for('view_guides'))
+        
+        return send_file(
+            filepath,
+            as_attachment=True,
+            download_name=f"Panduan_{guide_type}.pdf",
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        flash(f'Terjadi kesalahan saat mengunduh file: {str(e)}', 'error')
+        return redirect(url_for('view_guides'))
 
 
 if __name__ == '__main__':
