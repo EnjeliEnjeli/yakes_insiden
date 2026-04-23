@@ -150,7 +150,6 @@ def login():
 def logout():
     """Logout: clear session"""
     session.clear()
-    flash('Anda telah logout.', 'info')
     return redirect(url_for('login'))
 
 

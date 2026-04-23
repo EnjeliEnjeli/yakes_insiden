@@ -3,149 +3,384 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login — Sistem Insiden Siber Yakes Telkom</title>
+  <title>Login — SECURESYS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #f8fafc; --bg2: #ffffff; --bg3: #f1f5f9;
-      --border: rgba(51,102,204,0.1); --border2: rgba(51,102,204,0.2);
-      --text: #1e293b; --text2: #475569; --text3: #94a3b8;
-      --accent: #3366cc; --accent2: #2952a3;
-      --red: #dc2626; --red-bg: rgba(220,38,38,0.1);
-      --font: 'DM Sans', sans-serif;
+      --teal: #2AA5A5;
+      --teal-hover: #228b8b;
+      --dark-blue: #1C2D54;
+      --coral: #EE6161;
+      --bg-color: #EEF8FA;
+      --text: #4a5568;
+      --border: #e2e8f0;
+      --font: 'Inter', sans-serif;
     }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: var(--font); background: var(--bg); color: var(--text);
-      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      font-family: var(--font);
+      background-color: var(--bg-color);
+      color: var(--text);
+      min-height: 100vh;
+      overflow: hidden;
+      position: relative;
     }
-    /* Subtle grid bg */
-    body::before {
-      content: ''; position: fixed; inset: 0; z-index: 0;
-      background-image:
-        linear-gradient(rgba(51,102,204,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(51,102,204,0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
+    
+    /* Decorative Background Waves */
+    .bg-waves {
+      position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: -1;
+      background: 
+        radial-gradient(circle at 0% 0%, #ffffff 0%, transparent 40%),
+        radial-gradient(circle at 100% 100%, #e0f6f6 0%, transparent 50%),
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.3) 0px, rgba(255,255,255,0.3) 2px, transparent 2px, transparent 50px),
+        linear-gradient(120deg, #F0F9FB 0%, #E3F4F7 100%);
     }
-    .container { position: relative; z-index: 1; width: 100%; max-width: 380px; padding: 20px; }
 
-    .brand { text-align: center; margin-bottom: 32px; }
-    .brand-mark {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 48px; height: 48px; border-radius: 12px;
-      background: var(--accent); color: #fff; font-size: 18px; font-weight: 700;
-      margin-bottom: 14px; box-shadow: 0 0 40px rgba(51,102,204,0.3);
+    .container {
+      display: flex; width: 100vw; height: calc(100vh - 60px); 
     }
-    .brand h1 { font-size: 18px; font-weight: 600; color: var(--text); }
-    .brand p  { font-size: 13px; color: var(--text3); margin-top: 4px; }
-
-    .login-card {
-      background: var(--bg2); border: 1px solid var(--border2);
-      border-radius: 16px; padding: 28px;
+    
+    .left-panel {
+      flex: 1.2;
+      display: flex;
+      flex-direction: column;
+      padding: 50px 50px 20px 80px;
+      position: relative;
     }
-    .card-title { font-size: 15px; font-weight: 600; margin-bottom: 20px; color: var(--text); }
+    
+    .welcome-text {
+      color: var(--teal);
+      font-size: 24px;
+      font-weight: 500;
+      margin-bottom: 30px;
+    }
+    
+    .illustration {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .illustration img {
+      max-width: 80%;
+      max-height: 80%;
+      object-fit: contain;
+      /* Add a subtle drop shadow to illustration */
+      filter: drop-shadow(0 20px 30px rgba(42, 165, 165, 0.15));
+      border-radius: 20px;
+    }
 
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 7px; }
+    .right-panel {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .form-wrapper {
+      width: 100%;
+      max-width: 440px;
+      padding: 20px;
+      margin-top: -60px;
+    }
+    
+    /* Logo CSS */
+    .logo-container {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      margin-bottom: 40px;
+      padding-left: 20px;
+    }
+    
+    .shield-icon {
+      width: 60px;
+      height: 70px;
+      margin-right: 18px;
+      position: relative;
+    }
+    
+    .logo-text-group {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .logo-main-text {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      line-height: 1.1;
+    }
+    
+    .logo-sub-text {
+      font-size: 13px;
+      color: #64748b;
+      font-weight: 500;
+      margin-top: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 18px;
+      position: relative;
+    }
+    
+    .input-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--teal);
+      font-size: 18px;
+      pointer-events: none;
+    }
+    
     .form-control {
-      width: 100%; padding: 10px 13px;
-      background: var(--bg3); border: 1px solid var(--border2);
-      border-radius: 9px; color: var(--text); font-size: 13px;
-      font-family: var(--font); outline: none;
-      transition: border-color 0.18s, box-shadow 0.18s;
+      width: 100%;
+      padding: 15px 15px 15px 48px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: #1e293b;
+      font-size: 14px;
+      font-family: var(--font);
+      outline: none;
+      transition: all 0.2s;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01);
     }
-    .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(51,102,204,0.15); }
-    .form-control::placeholder { color: var(--text3); }
+    .form-control:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(42, 165, 165, 0.15);
+    }
+    .form-control::placeholder {
+      color: #a0aec0;
+      font-weight: 400;
+    }
+    
+    .toggle-pw {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #718096;
+      cursor: pointer;
+      font-size: 16px;
+    }
 
-    .btn-login {
-      width: 100%; padding: 11px; border-radius: 9px;
-      background: var(--accent); color: #fff; font-size: 14px; font-weight: 600;
-      border: none; cursor: pointer; font-family: var(--font);
-      transition: background 0.18s, transform 0.1s;
-      margin-top: 8px;
+    .captcha-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
     }
-    .btn-login:hover { background: var(--accent2); }
-    .btn-login:active { transform: scale(0.98); }
+    
+    .captcha-display {
+      flex: 1;
+      background: #F1F5F9;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: monospace;
+      font-size: 26px;
+      font-weight: bold;
+      letter-spacing: 8px;
+      user-select: none;
+      overflow: hidden;
+      position: relative;
+    }
+    /* Simple scratch background for captcha */
+    .captcha-display::after {
+      content:''; position:absolute; top:0; left:0; right:0; bottom:0;
+      background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.03) 5px, rgba(0,0,0,0.03) 6px);
+    }
+    
+    .captcha-input {
+      flex: 1;
+    }
+    .captcha-input .form-control {
+      padding-left: 15px; /* No icon */
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      background: var(--teal);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .btn-submit:hover {
+      background: var(--teal-hover);
+    }
 
     .alert-error {
-      background: var(--red-bg); color: var(--red);
-      border: 1px solid rgba(239,68,68,0.3);
-      border-radius: 8px; padding: 10px 13px;
-      font-size: 13px; margin-bottom: 16px;
+      background: #fef2f2;
+      color: #ef4444;
+      border: 1px solid #fca5a5;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      text-align: center;
     }
 
-    .demo-accounts {
-      margin-top: 20px; padding: 14px;
-      background: var(--bg3); border-radius: 10px;
-      border: 1px solid var(--border);
+    /* Footer */
+    .footer {
+      position: absolute;
+      bottom: 0; width: 100%; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 60px;
+      font-size: 12px; color: #64748b;
+      background: rgba(255,255,255,0.4);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255,255,255,0.5);
     }
-    .demo-title { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
-    .demo-row {
-      display: flex; justify-content: space-between; align-items: center;
-      font-size: 12px; padding: 5px 0; border-bottom: 1px solid var(--border);
-      cursor: pointer;
-    }
-    .demo-row:last-child { border-bottom: none; }
-    .demo-row:hover .demo-cred { color: var(--accent); }
-    .demo-role { color: var(--text2); }
-    .demo-cred { font-family: 'DM Mono', monospace; color: var(--text3); font-size: 11px; transition: color 0.15s; }
-    .demo-hint { font-size: 10px; color: var(--text3); margin-top: 8px; text-align: center; }
+    
+    .footer-left { display: flex; align-items: center; }
+    .footer-right { display: flex; align-items: center; gap: 30px; }
+    .footer-item { display: flex; align-items: center; gap: 8px; }
+    .footer-item i { color: var(--teal); font-size: 16px; }
 
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-    .container { animation: fadeIn 0.4s ease; }
+    @media (max-width: 992px) {
+      .container { flex-direction: column; height: auto; }
+      .left-panel { display: none; }
+      .right-panel { padding: 40px 20px; min-height: calc(100vh - 60px); }
+      .footer { padding: 0 20px; flex-direction: column; justify-content: center; gap: 10px; height: auto; padding-top: 15px; padding-bottom: 15px; }
+      .footer-right { gap: 15px; flex-wrap: wrap; justify-content: center; }
+    }
   </style>
 </head>
 <body>
+
+<div class="bg-waves"></div>
+
 <div class="container">
-  <div class="brand">
-    <div class="brand-mark">YT</div>
-    <h1>Yakes Telkom</h1>
-    <p>Sistem Pelaporan Insiden Keamanan Siber</p>
+  <div class="left-panel">
+    <div class="welcome-text">Hi, Selamat Datang di SECURESYS</div>
+    <div class="illustration">
+      <img src="{{ url_for('static', filename='img/illustration.png') }}" alt="SOC Dashboard Analyst">
+    </div>
   </div>
-
-  <div class="login-card">
-    <div class="card-title">Masuk ke Sistem</div>
-
-    {% if error %}
-    <div class="alert-error">{{ error }}</div>
-    {% endif %}
-
-    <form method="POST">
-      <div class="form-group">
-        <label class="form-label">Username</label>
-        <input type="text" name="username" class="form-control" placeholder="Masukkan username" required autofocus>
+  
+  <div class="right-panel">
+    <div class="form-wrapper">
+      
+      <!-- Shield Logo Custom SVG -->
+      <div class="logo-container">
+        <div class="shield-icon">
+          <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Shield Background -->
+            <path d="M50 0L0 20V50C0 80 20 105 50 120C80 105 100 80 100 50V20L50 0Z" fill="var(--teal)" stroke="var(--teal)" stroke-width="2"/>
+            <!-- Inner White Cutout -->
+            <path d="M50 15L15 29V50C15 72 30 90 50 102C70 90 85 72 85 50V29L50 15Z" fill="white"/>
+            <!-- Padlock -->
+            <rect x="35" y="60" width="30" height="22" rx="4" fill="var(--teal)"/>
+            <path d="M38 60V50C38 43 43.5 38 50 38C56.5 38 62 43 62 50V60" stroke="var(--teal)" stroke-width="6" stroke-linecap="round"/>
+            <circle cx="50" cy="69" r="3" fill="white"/>
+            <path d="M50 72V76" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="logo-text-group">
+          <div class="logo-main-text">
+            <span style="color: var(--teal)">SECU</span><span style="color: var(--dark-blue)">RE</span><span style="color: var(--coral)">SYS</span>
+          </div>
+          <div class="logo-sub-text">Security Response System</div>
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-control" placeholder="Masukkan password" required>
-      </div>
-      <button type="submit" class="btn-login">Masuk</button>
-    </form>
-  </div>
+      
+      {% if error %}
+      <div class="alert-error"><i class="fas fa-exclamation-circle mr-2"></i> {{ error }}</div>
+      {% endif %}
 
-  <div class="demo-accounts">
-    <div class="demo-title">Akun Demo</div>
-    <div class="demo-row" onclick="fillLogin('admin','admin123')">
-      <span class="demo-role">Administrator</span>
-      <span class="demo-cred">admin / admin123</span>
+      <form method="POST" autocomplete="off">
+        <div class="form-group">
+          <i class="fas fa-address-card input-icon"></i>
+          <input type="text" name="username" class="form-control" placeholder="Username" autocomplete="off" required autofocus>
+        </div>
+        
+        <div class="form-group">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="pw-input" name="password" class="form-control" placeholder="Password" autocomplete="new-password" required>
+          <i class="fas fa-eye-slash toggle-pw" id="pw-toggle"></i>
+        </div>
+        
+        <div class="captcha-row">
+          <div class="captcha-display">
+            <!-- Simulated CAPTCHA -->
+            <span style="color:#2563eb; font-style:italic; transform: translateY(-3px)">V</span>
+            <span style="color:#dc2626; transform: rotate(-5deg)">2</span>
+            <span style="color:#d97706; transform: rotate(8deg)">7</span>
+            <span style="color:#db2777; transform: translateY(2px)">1</span>
+          </div>
+          <div class="captcha-input">
+            <input type="text" class="form-control" placeholder="Masukan Captcha" required>
+          </div>
+        </div>
+        
+        <button type="submit" class="btn-submit">SIGN IN</button>
+      </form>
+      
     </div>
-    <div class="demo-row" onclick="fillLogin('budi','budi123')">
-      <span class="demo-role">Pelapor — Budi Santoso</span>
-      <span class="demo-cred">budi / budi123</span>
-    </div>
-    <div class="demo-row" onclick="fillLogin('siti','siti123')">
-      <span class="demo-role">Pelapor — Siti Rahayu</span>
-      <span class="demo-cred">siti / siti123</span>
-    </div>
-    <div class="demo-hint">Klik baris untuk mengisi form otomatis</div>
   </div>
 </div>
+
+<div class="footer">
+  <div class="footer-left">
+    Jl. Cilaki No.73, Citarum, Kec. Bandung Wetan, Kota Bandung, Jawa Barat 40115
+  </div>
+  <div class="footer-right">
+    <div class="footer-item">
+      <i class="fas fa-phone-alt"></i>
+      <span>022 - 8252-6441 / TRO 350</span>
+    </div>
+    <div class="footer-item">
+      <i class="fab fa-whatsapp" style="font-size: 18px;"></i>
+      <span>0821 1566 7778</span>
+    </div>
+    <div class="footer-item">
+      <i class="far fa-envelope"></i>
+      <span>helpdesk_sisfo@yakestelkom.or.id</span>
+    </div>
+  </div>
+</div>
+
 <script>
-function fillLogin(u, p) {
-  document.querySelector('[name=username]').value = u;
-  document.querySelector('[name=password]').value = p;
-}
+  // Password visibility toggle
+  const pwToggle = document.getElementById('pw-toggle');
+  const pwInput = document.getElementById('pw-input');
+  
+  pwToggle.addEventListener('click', function() {
+    if (pwInput.type === 'password') {
+      pwInput.type = 'text';
+      this.classList.remove('fa-eye-slash');
+      this.classList.add('fa-eye');
+    } else {
+      pwInput.type = 'password';
+      this.classList.remove('fa-eye');
+      this.classList.add('fa-eye-slash');
+    }
+  });
+
+  // Basic CAPTCHA validation simulation
+  document.querySelector('form').addEventListener('submit', function(e) {
+    const captchaVal = document.querySelector('.captcha-input input').value.trim().toLowerCase();
+    if (captchaVal !== 'v271' && captchaVal !== 'v 2 7 1') {
+      e.preventDefault();
+      alert('Captcha salah. Silahkan masukan V 2 7 1');
+    }
+  });
 </script>
 </body>
 </html>
