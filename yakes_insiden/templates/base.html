@@ -318,12 +318,6 @@
         <a href="{{ url_for('download_guide', guide_type='DoS/DDoS') }}" class="nav-submenu-item">📡 DoS/DDoS</a>
         <a href="{{ url_for('view_guides') }}" class="nav-submenu-item" style="border-top: 1px solid var(--border); margin-top: 4px; padding-top: 10px; font-weight: 500;">📖 Lihat Semua</a>
       </div>
-      {% if session.role == 'admin' %}
-        <a href="{{ url_for('admin_guides') }}" class="nav-item {% if request.endpoint == 'admin_guides' %}active{% endif %}">
-          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 9v3M10.5 10.5h3"/><path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4"/><path d="M2 4l6-2 6 2"/></svg>
-          Kelola Panduan
-        </a>
-      {% endif %}
     </nav>
     <div class="sidebar-footer">
       <div class="user-info">

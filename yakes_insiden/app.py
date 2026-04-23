@@ -430,59 +430,6 @@ def view_guides():
     return render_template('guides.html', guides=guides)
 
 
-@app.route('/admin/guides', methods=['GET', 'POST'])
-@admin_required
-def admin_guides():
-    """Admin panel for managing guides (upload/delete)"""
-    if request.method == 'POST':
-        guide_type = request.form.get('guide_type')
-        
-        if 'file' not in request.files:
-            flash('Tidak ada file yang dipilih.', 'error')
-            return redirect(url_for('admin_guides'))
-        
-        file = request.files['file']
-        
-        if file.filename == '':
-            flash('Tidak ada file yang dipilih.', 'error')
-            return redirect(url_for('admin_guides'))
-        
-        if file and allowed_file(file.filename) and guide_type in guides_db:
-            # Delete old file if exists
-            if guides_db[guide_type]['filename']:
-                old_path = os.path.join(app.config['UPLOAD_FOLDER'], guides_db[guide_type]['filename'])
-                if os.path.exists(old_path):
-                    os.remove(old_path)
-            
-            # Save new file with secure name
-            filename = secure_filename(f"{guide_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf")
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            
-            guides_db[guide_type]['filename'] = filename
-            guides_db[guide_type]['uploaded_date'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            
-            flash(f'Panduan "{guide_type}" berhasil diunggah!', 'success')
-            return redirect(url_for('admin_guides'))
-        else:
-            flash('File harus berupa PDF.', 'error')
-            return redirect(url_for('admin_guides'))
-    
-    return render_template('admin_guides.html', guides=guides_db)
-
-
-@app.route('/admin/guides/<guide_type>/delete', methods=['POST'])
-@admin_required
-def delete_guide(guide_type):
-    """Admin delete guide"""
-    if guide_type in guides_db and guides_db[guide_type]['filename']:
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], guides_db[guide_type]['filename'])
-        if os.path.exists(filepath):
-            os.remove(filepath)
-        guides_db[guide_type]['filename'] = None
-        guides_db[guide_type]['uploaded_date'] = None
-        flash(f'Panduan "{guide_type}" berhasil dihapus.', 'success')
-    return redirect(url_for('admin_guides'))
 
 
 @app.route('/guides/<guide_type>/download')
