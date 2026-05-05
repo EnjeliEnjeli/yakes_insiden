@@ -27,9 +27,7 @@ def allowed_file(filename):
 
 # ─── In-memory database (ganti dengan SQLite/PostgreSQL untuk produksi) ───────
 users = {
-    'admin': {'password': 'admin123', 'role': 'admin', 'nama': 'Admin IT'},
-    'budi':  {'password': 'budi123',  'role': 'user',  'nama': 'Budi Santoso'},
-    'siti':  {'password': 'siti123',  'role': 'user',  'nama': 'Siti Rahayu'},
+    'karyawan': {'password': 'karyawan123', 'nama': 'Karyawan Yakes'},
 }
 
 insiden_db = [
@@ -42,7 +40,7 @@ insiden_db = [
         'tindakan_awal': 'Tidak mengklik link dan segera melaporkan ke tim IT.',
         'status': 'Selesai', 'severity': 'Tinggi',
         'catatan_admin': 'Akun diamankan, password direset, user diedukasi.',
-        'petugas': 'Admin IT', 'tanggal_update': '2025-07-17'
+        'petugas': 'Karyawan Yakes', 'tanggal_update': '2025-07-17'
     },
     {
         'id': 'INC-002', 'jenis': 'Worm', 'pelapor': 'Siti Rahayu',
@@ -53,7 +51,7 @@ insiden_db = [
         'tindakan_awal': 'Server diisolasi dari jaringan utama sementara waktu.',
         'status': 'Diproses', 'severity': 'Tinggi',
         'catatan_admin': 'Sedang dilakukan analisis forensik.',
-        'petugas': 'Admin IT', 'tanggal_update': '2025-07-18'
+        'petugas': 'Karyawan Yakes', 'tanggal_update': '2025-07-18'
     },
     {
         'id': 'INC-003', 'jenis': 'DoS/DDoS', 'pelapor': 'Budi Santoso',
@@ -64,7 +62,7 @@ insiden_db = [
         'tindakan_awal': 'Kontak provider hosting untuk mitigasi.',
         'status': 'Diproses', 'severity': 'Sedang',
         'catatan_admin': 'Koordinasi dengan tim jaringan.',
-        'petugas': 'Admin IT', 'tanggal_update': '2025-07-18'
+        'petugas': 'Karyawan Yakes', 'tanggal_update': '2025-07-18'
     },
     {
         'id': 'INC-004', 'jenis': 'Vishing', 'pelapor': 'Siti Rahayu',
@@ -75,7 +73,7 @@ insiden_db = [
         'tindakan_awal': 'Menolak permintaan dan menutup telepon.',
         'status': 'Selesai', 'severity': 'Rendah',
         'catatan_admin': 'Laporan dicatat, tidak ada tindak lanjut teknis diperlukan.',
-        'petugas': 'Admin IT', 'tanggal_update': '2025-07-19'
+        'petugas': 'Karyawan Yakes', 'tanggal_update': '2025-07-19'
     },
     {
         'id': 'INC-005', 'jenis': 'Phishing SMS', 'pelapor': 'Budi Santoso',
@@ -86,7 +84,7 @@ insiden_db = [
         'tindakan_awal': 'Melaporkan nomor pengirim ke tim IT.',
         'status': 'Menunggu', 'severity': 'Tinggi',
         'catatan_admin': '',
-        'petugas': '-', 'tanggal_update': '2025-07-20'
+        'petugas': 'Karyawan Yakes', 'tanggal_update': '2025-07-20'
     },
 ]
 
@@ -157,7 +155,7 @@ def logout():
 @app.route('/admin')
 @admin_required
 def admin_dashboard():
-    """Admin dashboard - displays incident statistics and list"""
+    """Dashboard - displays incident statistics and list"""
     total   = len(insiden_db)
     menunggu = sum(1 for i in insiden_db if i['status'] == 'Menunggu')
     diproses = sum(1 for i in insiden_db if i['status'] == 'Diproses')
@@ -174,7 +172,7 @@ def admin_dashboard():
 @app.route('/admin/insiden/<id>')
 @admin_required
 def admin_detail(id):
-    """Admin detail view - display incident details"""
+    """Detail view - display incident details"""
     insiden = next((i for i in insiden_db if i['id'] == id), None)
     if not insiden:
         flash('Insiden tidak ditemukan.', 'error')
@@ -185,7 +183,7 @@ def admin_detail(id):
 @app.route('/admin/insiden/<id>/update', methods=['POST'])
 @admin_required
 def admin_update(id):
-    """Admin update incident - modify status, severity, notes"""
+    """Update incident - modify status, severity, notes"""
     insiden = next((i for i in insiden_db if i['id'] == id), None)
     if insiden:
         insiden['status']        = request.form.get('status', insiden['status'])
@@ -200,7 +198,7 @@ def admin_update(id):
 @app.route('/admin/insiden/<id>/pdf')
 @admin_required
 def export_pdf(id):
-    """Export incident report as PDF using ReportLab (Windows-compatible)"""
+    """Export incident report as PDF"""
     insiden = next((i for i in insiden_db if i['id'] == id), None)
     if not insiden:
         flash('Insiden tidak ditemukan.', 'error')
@@ -357,7 +355,7 @@ def export_pdf(id):
 @app.route('/user')
 @login_required
 def user_dashboard():
-    """User dashboard - display their reported incidents"""
+    """Dashboard - display their reported incidents"""
     if session['role'] == 'admin':
         return redirect(url_for('admin_dashboard'))
     my_insiden = [i for i in insiden_db if i['username_pelapor'] == session['username']]
@@ -412,7 +410,7 @@ def laporkan():
 @app.route('/user/insiden/<id>')
 @login_required
 def user_detail(id):
-    """User detail view - display their incident (with ownership check)"""
+    """Detail view - display their incident"""
     insiden = next((i for i in insiden_db if i['id'] == id), None)
     if not insiden or (session['role'] != 'admin' and insiden['username_pelapor'] != session['username']):
         flash('Anda tidak memiliki akses ke insiden ini.', 'error')
@@ -424,7 +422,7 @@ def user_detail(id):
 @app.route('/guides', methods=['GET'])
 @login_required
 def view_guides():
-    """View all available guides for users"""
+    """View all available guides"""
     guides = guides_db
     return render_template('guides.html', guides=guides)
 
@@ -434,7 +432,7 @@ def view_guides():
 @app.route('/guides/<guide_type>/download')
 @login_required
 def download_guide(guide_type):
-    """Download guide PDF"""
+    """Download guide"""
     if guide_type not in guides_db or not guides_db[guide_type]['filename']:
         flash('Panduan tidak tersedia.', 'error')
         return redirect(url_for('view_guides'))

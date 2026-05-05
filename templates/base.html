@@ -283,29 +283,15 @@
       <p>Sistem Insiden Siber</p>
     </div>
     <nav class="sidebar-nav">
-      {% if session.role == 'admin' %}
-        <div class="nav-section-label">Admin</div>
-        <a href="{{ url_for('admin_dashboard') }}" class="nav-item {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
-          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
-          Dashboard
-        </a>
-        <a href="{{ url_for('admin_dashboard') }}#tabel" class="nav-item">
-          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
-          Semua Laporan
-          {% set menunggu = insiden_list|selectattr('status','eq','Menunggu')|list|length if insiden_list is defined else 0 %}
-          {% if menunggu > 0 %}<span class="nav-badge">{{ menunggu }}</span>{% endif %}
-        </a>
-      {% else %}
-        <div class="nav-section-label">Menu</div>
-        <a href="{{ url_for('user_dashboard') }}" class="nav-item {% if request.endpoint == 'user_dashboard' %}active{% endif %}">
-          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
-          Dashboard Saya
-        </a>
-        <a href="{{ url_for('laporkan') }}" class="nav-item {% if request.endpoint == 'laporkan' %}active{% endif %}">
-          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3v10M3 8h10"/></svg>
-          Laporkan Insiden
-        </a>
-      {% endif %}
+      <div class="nav-section-label">Menu</div>
+      <a href="{{ url_for('user_dashboard') }}" class="nav-item {% if request.endpoint == 'user_dashboard' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+        Dashboard Saya
+      </a>
+      <a href="{{ url_for('laporkan') }}" class="nav-item {% if request.endpoint == 'laporkan' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3v10M3 8h10"/></svg>
+        Laporkan Insiden
+      </a>
       <div class="nav-section-label" style="margin-top:8px">Panduan</div>
       <div class="nav-item" onclick="toggleSubmenu(event)" style="cursor:pointer">
         <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4"/><path d="M2 4l6-2 6 2"/></svg>
@@ -322,10 +308,7 @@
     <div class="sidebar-footer">
       <div class="user-info">
         <div class="avatar">{{ session.nama[:2].upper() }}</div>
-        <div>
-          <div class="user-name">{{ session.nama }}</div>
-          <div class="user-role">{{ 'Administrator' if session.role == 'admin' else 'Pelapor' }}</div>
-        </div>
+        <div class="user-name">{{ session.nama }}</div>
         <a href="{{ url_for('logout') }}" class="logout-btn">Keluar</a>
       </div>
     </div>
