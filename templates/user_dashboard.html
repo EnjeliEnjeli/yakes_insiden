@@ -8,7 +8,7 @@
       <div class="page-title">Selamat datang, {{ session.nama }}</div>
       <div class="page-subtitle">Laporan insiden siber yang Anda ajukan</div>
     </div>
-    <a href="{{ url_for('laporkan') }}" class="btn btn-primary">
+    <a href="{{ url_for('laporkan_step1') }}" class="btn btn-primary">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
       Laporkan Insiden Baru
     </a>
@@ -16,23 +16,31 @@
 </div>
 
 <!-- STATS -->
-<div class="stats-grid fade-up fade-up-1" style="grid-template-columns:repeat(3,1fr)">
+{% set total = laporan_list|length %}
+{% set draft = laporan_list|selectattr('status','eq','Draft')|list|length %}
+{% set pdf_gen = laporan_list|selectattr('status','eq','PDF Generated')|list|length %}
+{% set terkirim = laporan_list|selectattr('status','eq','Terkirim')|list|length %}
+
+<div class="stats-grid fade-up fade-up-1" style="grid-template-columns:repeat(4,1fr)">
   <div class="stat-card">
-    <div class="stat-label">Total Laporan Saya</div>
-    <div class="stat-value blue">{{ insiden_list|length }}</div>
+    <div class="stat-label">Total Laporan</div>
+    <div class="stat-value blue">{{ total }}</div>
     <div class="stat-delta">Sepanjang waktu</div>
   </div>
   <div class="stat-card">
-    <div class="stat-label">Dalam Proses</div>
-    {% set diproses = insiden_list|selectattr('status','in',['Menunggu','Diproses'])|list|length %}
-    <div class="stat-value amber">{{ diproses }}</div>
-    <div class="stat-delta">Sedang ditangani</div>
+    <div class="stat-label">Draft</div>
+    <div class="stat-value amber">{{ draft }}</div>
+    <div class="stat-delta">Belum generate PDF</div>
   </div>
   <div class="stat-card">
-    <div class="stat-label">Selesai</div>
-    {% set selesai = insiden_list|selectattr('status','eq','Selesai')|list|length %}
-    <div class="stat-value green">{{ selesai }}</div>
-    <div class="stat-delta">Insiden teratasi</div>
+    <div class="stat-label">PDF Generated</div>
+    <div class="stat-value teal">{{ pdf_gen }}</div>
+    <div class="stat-delta">Siap dikirim</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Terkirim</div>
+    <div class="stat-value green">{{ terkirim }}</div>
+    <div class="stat-delta">Ke Helpdesk</div>
   </div>
 </div>
 
@@ -41,35 +49,46 @@
   <div class="table-header">
     <span class="table-title">Riwayat Laporan Saya</span>
   </div>
-  {% if insiden_list %}
+  {% if laporan_list %}
   <table>
     <thead>
       <tr>
-        <th>ID</th>
-        <th>Jenis Insiden</th>
+        <th>No. Insiden</th>
+        <th>Jenis</th>
         <th>Tanggal</th>
-        <th>Severity</th>
+        <th>Keparahan</th>
         <th>Status</th>
         <th>Aksi</th>
       </tr>
     </thead>
     <tbody>
-    {% for i in insiden_list %}
+    {% for lap in laporan_list %}
     <tr>
-      <td class="id-cell">{{ i.id }}</td>
-      <td>{{ i.jenis }}</td>
-      <td style="color:var(--text3)">{{ i.tanggal }}</td>
+      <td class="id-cell">{{ lap.nomor_insiden }}</td>
+      <td>{{ lap.jenis_insiden }}</td>
+      <td style="color:var(--text3)">{{ lap.tanggal }}</td>
       <td>
-        {% if i.severity == 'Tinggi' %}<span class="badge red"><span class="badge-dot"></span>Tinggi</span>
-        {% elif i.severity == 'Sedang' %}<span class="badge amber"><span class="badge-dot"></span>Sedang</span>
+        {% if lap.tingkat_keparahan == 'Tinggi' %}<span class="badge red"><span class="badge-dot"></span>Tinggi</span>
+        {% elif lap.tingkat_keparahan == 'Sedang' %}<span class="badge amber"><span class="badge-dot"></span>Sedang</span>
         {% else %}<span class="badge green"><span class="badge-dot"></span>Rendah</span>{% endif %}
       </td>
       <td>
-        {% if i.status == 'Menunggu' %}<span class="badge red"><span class="badge-dot"></span>Menunggu</span>
-        {% elif i.status == 'Diproses' %}<span class="badge amber"><span class="badge-dot"></span>Diproses</span>
-        {% else %}<span class="badge green"><span class="badge-dot"></span>Selesai</span>{% endif %}
+        {% if lap.status == 'Draft' %}<span class="badge gray"><span class="badge-dot"></span>Draft</span>
+        {% elif lap.status == 'PDF Generated' %}<span class="badge blue"><span class="badge-dot"></span>PDF Ready</span>
+        {% elif lap.status == 'Terkirim' %}<span class="badge green"><span class="badge-dot"></span>Terkirim</span>
+        {% else %}<span class="badge gray"><span class="badge-dot"></span>{{ lap.status }}</span>{% endif %}
       </td>
-      <td><a href="{{ url_for('user_detail', id=i.id) }}" class="btn btn-ghost btn-sm">Lihat Detail</a></td>
+      <td>
+        <div class="flex-gap">
+          <a href="{{ url_for('user_detail', id=lap.id) }}" class="btn btn-ghost btn-sm">Detail</a>
+          {% if lap.pdf_filename %}
+          <a href="{{ url_for('download_pdf', id=lap.id) }}" class="btn btn-sm btn-primary" title="Download PDF">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12h8M8 3v7M5 7l3 3 3-3"/></svg>
+            PDF
+          </a>
+          {% endif %}
+        </div>
+      </td>
     </tr>
     {% endfor %}
     </tbody>
@@ -78,7 +97,7 @@
   <div class="empty-state">
     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto;display:block;color:var(--text3)"><path d="M9 12h6M9 16h6M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/></svg>
     <p>Anda belum pernah melaporkan insiden.</p>
-    <a href="{{ url_for('laporkan') }}" class="btn btn-primary" style="margin-top:14px;display:inline-flex">Buat Laporan Pertama</a>
+    <a href="{{ url_for('laporkan_step1') }}" class="btn btn-primary" style="margin-top:14px;display:inline-flex">Buat Laporan Pertama</a>
   </div>
   {% endif %}
 </div>

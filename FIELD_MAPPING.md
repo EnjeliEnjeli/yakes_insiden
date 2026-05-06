@@ -160,16 +160,6 @@ REKOMENDASI
 - Dapat mengisi semua informasi teknis yang diperlukan
 - Proses pelaporan lebih terstruktur (3 step)
 
-✅ **Untuk Admin:**
-- Laporan yang lebih detail dan profesional
-- PDF export mencakup semua informasi penting
-- Lebih mudah untuk dokumentasi dan analisis
-
-✅ **Untuk Organisasi:**
-- Sesuai dengan template dokumen resmi Telkom
-- Data insiden lebih lengkap untuk investigasi
-- Dapat digunakan untuk compliance/audit
-
 ---
 
 ## Testing Scenario
@@ -204,10 +194,10 @@ REKOMENDASI
    - Rekomendasi: Update policy Windows...
    - Klik "Kirim Laporan"
 
-6. **Admin Login** sebagai `admin` / `admin123`
-7. **Buka /admin/insiden/INC-006**
-8. **Klik "Export PDF"** → Dokumen lengkap terdownload ✅
 
+6. **Klik "Export PDF"** → Dokumen lengkap terdownload ✅
+
+7. Kirim Lansung dan terintegrasi dengan WA helpdesk
 ---
 
 **Status: ✅ SEMUA FIELD SIAP DIGUNAKAN**

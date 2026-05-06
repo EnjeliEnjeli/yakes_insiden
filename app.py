@@ -1,146 +1,305 @@
-from flask import Flask, render_template, redirect, url_for, request, session, make_response, flash, send_file
+"""
+Sistem Pelaporan Insiden Keamanan Siber — Yakes Telkom
+Flask Application
+
+Flow: Karyawan → Login → Isi Form → Generate PDF → Kirim WA Helpdesk → Terkirim
+"""
+
+import os
+import json
 from datetime import datetime
 from io import BytesIO
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from functools import wraps
+from urllib.parse import quote
+
+from flask import (
+    Flask, render_template, request, redirect, url_for,
+    session, flash, send_file
+)
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
+
+# ReportLab for PDF
+from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
-from werkzeug.utils import secure_filename
-import json, os
-from pathlib import Path
+from reportlab.lib.units import cm
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 
+# ═══════════════════════════════════════════════════════════════
+# APP CONFIGURATION
+# ═══════════════════════════════════════════════════════════════
 app = Flask(__name__)
-app.secret_key = 'yakes-telkom-secret-2025'
+app.secret_key = 'yakes-telkom-insiden-secret-key-2024'
 
-# ─── Uploads directory ────────────────────────────────────────────────────────
-UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
-ALLOWED_EXTENSIONS = {'pdf'}
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'insiden.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['PDF_FOLDER'] = os.path.join(basedir, 'uploads', 'pdf')
+app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'uploads', 'guides')
 
-def allowed_file(filename):
-    """Check if file extension is allowed"""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+os.makedirs(app.config['PDF_FOLDER'], exist_ok=True)
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs(os.path.join(basedir, 'instance'), exist_ok=True)
 
-# ─── In-memory database (ganti dengan SQLite/PostgreSQL untuk produksi) ───────
-users = {
-    'karyawan': {'password': 'karyawan123', 'nama': 'Karyawan Yakes'},
-}
+db = SQLAlchemy(app)
 
-insiden_db = [
-    {
-        'id': 'INC-001', 'jenis': 'Phishing SMS', 'pelapor': 'Budi Santoso',
-        'username_pelapor': 'budi', 'tanggal': '2025-07-16',
-        'jam': '09:15', 'lokasi': 'Kantor Pusat Bandung',
-        'deskripsi': 'Menerima SMS mencurigakan yang meminta klik link dan memasukkan data login akun kesehatan.',
-        'dampak': 'Akun email terancam, potensi kebocoran data pasien.',
-        'tindakan_awal': 'Tidak mengklik link dan segera melaporkan ke tim IT.',
-        'status': 'Selesai', 'severity': 'Tinggi',
-        'catatan_admin': 'Akun diamankan, password direset, user diedukasi.',
-        'petugas': 'Karyawan Yakes', 'tanggal_update': '2025-07-17'
-    },
-    {
-        'id': 'INC-002', 'jenis': 'Worm', 'pelapor': 'Siti Rahayu',
-        'username_pelapor': 'siti', 'tanggal': '2025-07-17',
-        'jam': '14:30', 'lokasi': 'Ruang Server Lt.3',
-        'deskripsi': 'Komputer server menunjukkan aktivitas jaringan tidak normal, CPU 100% tanpa sebab jelas.',
-        'dampak': 'Kinerja server menurun drastis, layanan SIMRS terganggu 2 jam.',
-        'tindakan_awal': 'Server diisolasi dari jaringan utama sementara waktu.',
-        'status': 'Diproses', 'severity': 'Tinggi',
-        'catatan_admin': 'Sedang dilakukan analisis forensik.',
-        'petugas': 'Karyawan Yakes', 'tanggal_update': '2025-07-18'
-    },
-    {
-        'id': 'INC-003', 'jenis': 'DoS/DDoS', 'pelapor': 'Budi Santoso',
-        'username_pelapor': 'budi', 'tanggal': '2025-07-18',
-        'jam': '11:00', 'lokasi': 'Infrastruktur Cloud',
-        'deskripsi': 'Website portal pasien tidak dapat diakses selama 30 menit akibat lonjakan traffic mencurigakan.',
-        'dampak': 'Layanan portal pasien down, sekitar 200 pengguna terdampak.',
-        'tindakan_awal': 'Kontak provider hosting untuk mitigasi.',
-        'status': 'Diproses', 'severity': 'Sedang',
-        'catatan_admin': 'Koordinasi dengan tim jaringan.',
-        'petugas': 'Karyawan Yakes', 'tanggal_update': '2025-07-18'
-    },
-    {
-        'id': 'INC-004', 'jenis': 'Vishing', 'pelapor': 'Siti Rahayu',
-        'username_pelapor': 'siti', 'tanggal': '2025-07-19',
-        'jam': '16:45', 'lokasi': 'Kantor Pusat Bandung',
-        'deskripsi': 'Mendapat telepon dari orang mengaku teknisi Telkom yang meminta akses remote ke komputer.',
-        'dampak': 'Tidak ada dampak, permintaan ditolak.',
-        'tindakan_awal': 'Menolak permintaan dan menutup telepon.',
-        'status': 'Selesai', 'severity': 'Rendah',
-        'catatan_admin': 'Laporan dicatat, tidak ada tindak lanjut teknis diperlukan.',
-        'petugas': 'Karyawan Yakes', 'tanggal_update': '2025-07-19'
-    },
-    {
-        'id': 'INC-005', 'jenis': 'Phishing SMS', 'pelapor': 'Budi Santoso',
-        'username_pelapor': 'budi', 'tanggal': '2025-07-20',
-        'jam': '08:30', 'lokasi': 'Kantor Pusat Bandung',
-        'deskripsi': 'SMS massal ke nomor karyawan berisi tautan palsu berkedok promo kesehatan Telkom.',
-        'dampak': 'Belum ada korban teridentifikasi, potensi phishing skala besar.',
-        'tindakan_awal': 'Melaporkan nomor pengirim ke tim IT.',
-        'status': 'Menunggu', 'severity': 'Tinggi',
-        'catatan_admin': '',
-        'petugas': 'Karyawan Yakes', 'tanggal_update': '2025-07-20'
-    },
-]
+# WhatsApp Helpdesk Number (international format tanpa +)
+WA_HELPDESK_NUMBER = '6285397175128'
 
-next_id = [6]
+# ═══════════════════════════════════════════════════════════════
+# DATABASE MODELS
+# ═══════════════════════════════════════════════════════════════
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(200), nullable=False)
+    nama = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    laporan = db.relationship('LaporanInsiden', backref='user', lazy=True)
 
-# ─── Guides database (stored with filename, type, upload date) ────────────────
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+
+class LaporanInsiden(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nomor_insiden = db.Column(db.String(20), unique=True, nullable=False)
+    # Step 1
+    jenis_insiden = db.Column(db.String(50), nullable=False)
+    # Step 2
+    tanggal = db.Column(db.String(20), nullable=False)
+    jam = db.Column(db.String(10), nullable=False)
+    lokasi = db.Column(db.String(100), nullable=False)
+    tim_csirt = db.Column(db.String(100))
+    sistem_terdampak = db.Column(db.String(200))
+    tingkat_keparahan = db.Column(db.String(20), nullable=False)
+    deskripsi_kejadian = db.Column(db.Text, nullable=False)
+    ringkasan_insiden = db.Column(db.Text)
+    kronologi = db.Column(db.Text)
+    # Step 3
+    dampak = db.Column(db.Text)
+    tindakan_awal = db.Column(db.Text)
+    akar_masalah = db.Column(db.Text)
+    ioc_hash = db.Column(db.String(200))
+    ioc_ip_domain = db.Column(db.String(200))
+    ioc_port_media = db.Column(db.String(200))
+    analisis_teknis = db.Column(db.Text)
+    aksi_soc = db.Column(db.Text)
+    aksi_ir = db.Column(db.Text)
+    pemulihan = db.Column(db.Text)
+    rekomendasi = db.Column(db.Text)
+    # Meta
+    status = db.Column(db.String(20), default='Draft')
+    pdf_filename = db.Column(db.String(200))
+    pelapor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# Guides (static data)
 guides_db = {
     'Worm': {'filename': None, 'uploaded_date': None, 'description': 'Panduan penanganan Worm'},
     'DoS/DDoS': {'filename': None, 'uploaded_date': None, 'description': 'Panduan penanganan DoS/DDoS'},
     'Phishing': {'filename': None, 'uploaded_date': None, 'description': 'Panduan penanganan Phishing/Vishing'},
 }
 
-
+# ═══════════════════════════════════════════════════════════════
+# DECORATORS
+# ═══════════════════════════════════════════════════════════════
 def login_required(f):
     """Decorator: require user to be logged in"""
-    from functools import wraps
     @wraps(f)
     def decorated(*args, **kwargs):
-        if 'username' not in session:
+        if 'user_id' not in session:
             flash('Silakan login terlebih dahulu.', 'warning')
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated
 
 
-def admin_required(f):
-    """Decorator: require admin role"""
-    from functools import wraps
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if 'username' not in session:
-            flash('Silakan login terlebih dahulu.', 'warning')
-            return redirect(url_for('login'))
-        if session.get('role') != 'admin':
-            flash('Anda tidak memiliki akses ke halaman ini. Hanya admin yang dapat mengakses.', 'error')
-            return redirect(url_for('user_dashboard'))
-        return f(*args, **kwargs)
-    return decorated
+# ═══════════════════════════════════════════════════════════════
+# HELPERS
+# ═══════════════════════════════════════════════════════════════
+def generate_nomor_insiden():
+    """Generate auto-increment incident number like INC-0001"""
+    last = LaporanInsiden.query.order_by(LaporanInsiden.id.desc()).first()
+    next_num = (last.id + 1) if last else 1
+    return f"INC-{next_num:04d}"
 
 
-# ─── AUTH ─────────────────────────────────────────────────────────────────────
+def generate_wa_link(laporan):
+    """Generate wa.me link with pre-filled message"""
+    user = db.session.get(User, laporan.pelapor_id)
+    nama = user.nama if user else '-'
+
+    message = (
+        f"📋 *LAPORAN INSIDEN KEAMANAN SIBER*\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"📌 No: {laporan.nomor_insiden}\n"
+        f"⚠️ Jenis: {laporan.jenis_insiden}\n"
+        f"🔴 Keparahan: {laporan.tingkat_keparahan}\n"
+        f"👤 Pelapor: {nama}\n"
+        f"📅 Tanggal: {laporan.tanggal}, {laporan.jam} WIB\n"
+        f"📍 Lokasi: {laporan.lokasi}\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"📝 Deskripsi:\n{laporan.deskripsi_kejadian}\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"_Mohon segera ditindaklanjuti. File PDF laporan akan dikirim menyusul._"
+    )
+    return f"https://wa.me/{WA_HELPDESK_NUMBER}?text={quote(message)}"
+
+
+def generate_pdf(laporan):
+    """Generate PDF report and save to uploads/pdf/"""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        topMargin=1.5*cm, bottomMargin=1.5*cm,
+        leftMargin=2*cm, rightMargin=2*cm
+    )
+
+    elements = []
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle(
+        'CustomTitle', parent=styles['Heading1'],
+        fontSize=16, textColor=colors.HexColor('#1d4ed8'),
+        spaceAfter=6, alignment=1
+    )
+    subtitle_style = ParagraphStyle(
+        'Subtitle', parent=styles['Normal'],
+        fontSize=9, textColor=colors.HexColor('#64748b'),
+        alignment=1, spaceAfter=20
+    )
+    section_style = ParagraphStyle(
+        'SectionTitle', parent=styles['Heading2'],
+        fontSize=12, textColor=colors.HexColor('#1e293b'),
+        spaceAfter=8, spaceBefore=16
+    )
+    normal_style = ParagraphStyle(
+        'CustomNormal', parent=styles['Normal'],
+        fontSize=10, textColor=colors.HexColor('#334155'),
+        leading=14, spaceAfter=6
+    )
+    footer_style = ParagraphStyle(
+        'Footer', parent=styles['Normal'],
+        fontSize=8, textColor=colors.HexColor('#94a3b8')
+    )
+
+    # Title
+    elements.append(Paragraph("LAPORAN INSIDEN KEAMANAN SIBER", title_style))
+    elements.append(Paragraph("Yakes Telkom · Digital Healthcare IT Operation", subtitle_style))
+    elements.append(Spacer(1, 0.3*cm))
+
+    # Info table
+    user = db.session.get(User, laporan.pelapor_id)
+    nama = user.nama if user else '-'
+
+    meta_data = [
+        ['Nomor Insiden', laporan.nomor_insiden],
+        ['Jenis Insiden', laporan.jenis_insiden],
+        ['Tingkat Keparahan', laporan.tingkat_keparahan],
+        ['Pelapor', nama],
+        ['Tanggal Kejadian', f"{laporan.tanggal}, pukul {laporan.jam} WIB"],
+        ['Lokasi', laporan.lokasi],
+    ]
+    if laporan.tim_csirt:
+        meta_data.append(['Tim CSIRT', laporan.tim_csirt])
+    if laporan.sistem_terdampak:
+        meta_data.append(['Sistem Terdampak', laporan.sistem_terdampak])
+
+    meta_table = Table(meta_data, colWidths=[5*cm, 11*cm])
+    meta_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f1f5f9')),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#1e293b')),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (-1, -1), 10),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e2e8f0')),
+    ]))
+    elements.append(meta_table)
+    elements.append(Spacer(1, 0.5*cm))
+
+    # Content sections
+    sections = [
+        ('Deskripsi Kejadian', laporan.deskripsi_kejadian),
+        ('Ringkasan Insiden', laporan.ringkasan_insiden),
+        ('Kronologi', laporan.kronologi),
+        ('Dampak', laporan.dampak),
+        ('Tindakan Awal', laporan.tindakan_awal),
+        ('Akar Masalah (Root Cause)', laporan.akar_masalah),
+        ('Analisis Teknis', laporan.analisis_teknis),
+        ('Aksi SOC (Detection)', laporan.aksi_soc),
+        ('Aksi IR (Response)', laporan.aksi_ir),
+        ('Pemulihan', laporan.pemulihan),
+        ('Rekomendasi', laporan.rekomendasi),
+    ]
+    for title, content in sections:
+        if content:
+            elements.append(Paragraph(title, section_style))
+            elements.append(Paragraph(str(content), normal_style))
+
+    # IOC
+    if laporan.ioc_hash or laporan.ioc_ip_domain or laporan.ioc_port_media:
+        elements.append(Paragraph("Indikator (IOC / IOA)", section_style))
+        ioc = ""
+        if laporan.ioc_hash:
+            ioc += f"<b>Hash:</b> {laporan.ioc_hash}<br/>"
+        if laporan.ioc_ip_domain:
+            ioc += f"<b>IP/Domain:</b> {laporan.ioc_ip_domain}<br/>"
+        if laporan.ioc_port_media:
+            ioc += f"<b>Port/Media:</b> {laporan.ioc_port_media}"
+        elements.append(Paragraph(ioc, normal_style))
+
+    # Footer
+    elements.append(Spacer(1, 1*cm))
+    elements.append(Paragraph(
+        f"Dicetak: {datetime.now().strftime('%d %B %Y, %H:%M')} WIB", footer_style
+    ))
+    elements.append(Paragraph(
+        "Dokumen ini dibuat secara otomatis oleh Sistem Pelaporan Insiden Yakes Telkom.",
+        footer_style
+    ))
+
+    doc.build(elements)
+
+    # Save file
+    pdf_filename = f"laporan_{laporan.nomor_insiden.replace('-','_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    pdf_path = os.path.join(app.config['PDF_FOLDER'], pdf_filename)
+    with open(pdf_path, 'wb') as f:
+        f.write(buffer.getvalue())
+
+    return pdf_filename
+
+
+# ═══════════════════════════════════════════════════════════════
+# ROUTES — AUTH
+# ═══════════════════════════════════════════════════════════════
 @app.route('/', methods=['GET', 'POST'])
 def login():
-    """Login route - direct to appropriate dashboard based on role"""
-    if 'username' in session:
-        return redirect(url_for('admin_dashboard') if session['role'] == 'admin' else url_for('user_dashboard'))
+    """Login route"""
+    if 'user_id' in session:
+        return redirect(url_for('user_dashboard'))
+
     error = None
     if request.method == 'POST':
-        u = request.form.get('username', '').strip()
-        p = request.form.get('password', '').strip()
-        if u in users and users[u]['password'] == p:
-            session['username'] = u
-            session['role'] = users[u]['role']
-            session['nama'] = users[u]['nama']
-            return redirect(url_for('admin_dashboard') if users[u]['role'] == 'admin' else url_for('user_dashboard'))
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            session['user_id'] = user.id
+            session['username'] = user.username
+            session['nama'] = user.nama
+            return redirect(url_for('user_dashboard'))
         error = 'Username atau password salah.'
+
     return render_template('login.html', error=error)
 
 
@@ -151,308 +310,258 @@ def logout():
     return redirect(url_for('login'))
 
 
-# ─── ADMIN ────────────────────────────────────────────────────────────────────
-@app.route('/admin')
-@admin_required
-def admin_dashboard():
-    """Dashboard - displays incident statistics and list"""
-    total   = len(insiden_db)
-    menunggu = sum(1 for i in insiden_db if i['status'] == 'Menunggu')
-    diproses = sum(1 for i in insiden_db if i['status'] == 'Diproses')
-    selesai  = sum(1 for i in insiden_db if i['status'] == 'Selesai')
-    per_jenis = {}
-    for i in insiden_db:
-        per_jenis[i['jenis']] = per_jenis.get(i['jenis'], 0) + 1
-    return render_template('admin_dashboard.html',
-        insiden_list=sorted(insiden_db, key=lambda x: x['tanggal'], reverse=True),
-        total=total, menunggu=menunggu, diproses=diproses, selesai=selesai,
-        per_jenis=json.dumps(per_jenis))
-
-
-@app.route('/admin/insiden/<id>')
-@admin_required
-def admin_detail(id):
-    """Detail view - display incident details"""
-    insiden = next((i for i in insiden_db if i['id'] == id), None)
-    if not insiden:
-        flash('Insiden tidak ditemukan.', 'error')
-        return redirect(url_for('admin_dashboard'))
-    return render_template('admin_detail.html', insiden=insiden)
-
-
-@app.route('/admin/insiden/<id>/update', methods=['POST'])
-@admin_required
-def admin_update(id):
-    """Update incident - modify status, severity, notes"""
-    insiden = next((i for i in insiden_db if i['id'] == id), None)
-    if insiden:
-        insiden['status']        = request.form.get('status', insiden['status'])
-        insiden['severity']      = request.form.get('severity', insiden['severity'])
-        insiden['catatan_admin'] = request.form.get('catatan_admin', '')
-        insiden['petugas']       = session['nama']
-        insiden['tanggal_update'] = datetime.now().strftime('%Y-%m-%d')
-        flash('Insiden berhasil diperbarui.', 'success')
-    return redirect(url_for('admin_detail', id=id))
-
-
-@app.route('/admin/insiden/<id>/pdf')
-@admin_required
-def export_pdf(id):
-    """Export incident report as PDF"""
-    insiden = next((i for i in insiden_db if i['id'] == id), None)
-    if not insiden:
-        flash('Insiden tidak ditemukan.', 'error')
-        return redirect(url_for('admin_dashboard'))
-    
-    if session.get('role') != 'admin':
-        flash('Anda tidak memiliki akses untuk export PDF.', 'error')
-        return redirect(url_for('user_dashboard'))
-    
-    try:
-        buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter,
-                                topMargin=0.5*inch, bottomMargin=0.5*inch,
-                                leftMargin=0.75*inch, rightMargin=0.75*inch)
-        
-        elements = []
-        styles = getSampleStyleSheet()
-        
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=16,
-            textColor=colors.HexColor('#1a4d8f'),
-            spaceAfter=12,
-            alignment=1
-        )
-        elements.append(Paragraph("LAPORAN INSIDEN KEAMANAN", title_style))
-        elements.append(Spacer(1, 0.2*inch))
-        
-        meta_data = [
-            ['ID Insiden:', insiden['id']],
-            ['Jenis:', insiden['jenis']],
-            ['Status:', insiden['status']],
-            ['Severity:', insiden['severity']],
-            ['Pelapor:', insiden['pelapor']],
-            ['Tanggal Laporan:', insiden['tanggal']],
-            ['Jam:', insiden['jam']],
-            ['Lokasi:', insiden['lokasi']],
-            ['Tanggal Update:', insiden['tanggal_update']],
-        ]
-        
-        meta_table = Table(meta_data, colWidths=[2*inch, 3.5*inch])
-        meta_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#e8f0f8')),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ]))
-        elements.append(meta_table)
-        elements.append(Spacer(1, 0.3*inch))
-        
-        elements.append(Paragraph("Deskripsi Insiden", styles['Heading2']))
-        elements.append(Paragraph(insiden['deskripsi'], styles['Normal']))
-        elements.append(Spacer(1, 0.15*inch))
-        
-        elements.append(Paragraph("Dampak", styles['Heading2']))
-        elements.append(Paragraph(insiden['dampak'], styles['Normal']))
-        elements.append(Spacer(1, 0.15*inch))
-        
-        elements.append(Paragraph("Tindakan Awal", styles['Heading2']))
-        elements.append(Paragraph(insiden['tindakan_awal'], styles['Normal']))
-        elements.append(Spacer(1, 0.15*inch))
-        
-        if insiden.get('tim_csirt'):
-            elements.append(Paragraph("Tim CSIRT", styles['Heading2']))
-            elements.append(Paragraph(insiden['tim_csirt'], styles['Normal']))
-            elements.append(Spacer(1, 0.15*inch))
-        
-        if insiden.get('sistem_terdampak'):
-            elements.append(Paragraph("Sistem Terdampak", styles['Heading2']))
-            elements.append(Paragraph(insiden['sistem_terdampak'], styles['Normal']))
-            elements.append(Spacer(1, 0.15*inch))
-        
-        if insiden.get('ringkasan_insiden'):
-            elements.append(Paragraph("Ringkasan Insiden", styles['Heading2']))
-            elements.append(Paragraph(insiden['ringkasan_insiden'], styles['Normal']))
-            elements.append(Spacer(1, 0.15*inch))
-        
-        if insiden.get('kronologi'):
-            elements.append(Paragraph("Kronologi", styles['Heading2']))
-            elements.append(Paragraph(insiden['kronologi'], styles['Normal']))
-            elements.append(Spacer(1, 0.15*inch))
-        
-        if insiden.get('akar_masalah'):
-            elements.append(Paragraph("Akar Masalah (Root Cause)", styles['Heading2']))
-            elements.append(Paragraph(insiden['akar_masalah'], styles['Normal']))
-            elements.append(Spacer(1, 0.15*inch))
-        
-        # IOC Section
-        if insiden.get('ioc_hash') or insiden.get('ioc_ip_domain') or insiden.get('ioc_port_media'):
-            elements.append(Paragraph("Indikator (IOC / IOA)", styles['Heading2']))
-            ioc_content = ""
-            if insiden.get('ioc_hash'):
-                ioc_content += f"<b>Hash:</b> {insiden['ioc_hash']}<br/>"
-            if insiden.get('ioc_ip_domain'):
-                ioc_content += f"<b>IP/Domain:</b> {insiden['ioc_ip_domain']}<br/>"
-            if insiden.get('ioc_port_media'):
-                ioc_content += f"<b>Port / Media:</b> {insiden['ioc_port_media']}"
-            elements.append(Paragraph(ioc_content, styles['Normal']))
-            elements.append(Spacer(1, 0.15*inch))
-        
-        if insiden.get('analisis_teknis'):
-            elements.append(Paragraph("Analisis Teknis", styles['Heading2']))
-            elements.append(Paragraph(insiden['analisis_teknis'], styles['Normal']))
-            elements.append(Spacer(1, 0.15*inch))
-        
-        if insiden.get('aksi_soc'):
-            elements.append(Paragraph("Aksi SOC (Detection)", styles['Heading2']))
-            elements.append(Paragraph(insiden['aksi_soc'], styles['Normal']))
-            elements.append(Spacer(1, 0.15*inch))
-        
-        if insiden.get('aksi_ir'):
-            elements.append(Paragraph("Aksi IR (Response)", styles['Heading2']))
-            elements.append(Paragraph(insiden['aksi_ir'], styles['Normal']))
-            elements.append(Spacer(1, 0.15*inch))
-        
-        if insiden.get('pemulihan'):
-            elements.append(Paragraph("Pemulihan", styles['Heading2']))
-            elements.append(Paragraph(insiden['pemulihan'], styles['Normal']))
-            elements.append(Spacer(1, 0.15*inch))
-        
-        if insiden.get('rekomendasi'):
-            elements.append(Paragraph("Rekomendasi", styles['Heading2']))
-            elements.append(Paragraph(insiden['rekomendasi'], styles['Normal']))
-            elements.append(Spacer(1, 0.15*inch))
-        
-        if insiden['catatan_admin']:
-            elements.append(Paragraph("Catatan Admin", styles['Heading2']))
-            elements.append(Paragraph(insiden['catatan_admin'], styles['Normal']))
-            elements.append(Spacer(1, 0.15*inch))
-        
-        elements.append(Spacer(1, 0.3*inch))
-        footer_text = f"Diproses oleh: {insiden['petugas']} | Generated: {datetime.now().strftime('%d %B %Y, %H:%M')}"
-        elements.append(Paragraph(footer_text, styles['Normal']))
-        
-        doc.build(elements)
-        buffer.seek(0)
-        
-        response = make_response(buffer.read())
-        response.headers['Content-Type'] = 'application/pdf'
-        response.headers['Content-Disposition'] = f'attachment; filename=laporan_{id}.pdf'
-        return response
-    
-    except Exception as e:
-        flash(f'Gagal generate PDF: {str(e)}', 'error')
-        return redirect(url_for('admin_detail', id=id))
-
-
-# ─── USER ─────────────────────────────────────────────────────────────────────
-@app.route('/user')
+# ═══════════════════════════════════════════════════════════════
+# ROUTES — DASHBOARD
+# ═══════════════════════════════════════════════════════════════
+@app.route('/dashboard')
 @login_required
 def user_dashboard():
-    """Dashboard - display their reported incidents"""
-    if session['role'] == 'admin':
-        return redirect(url_for('admin_dashboard'))
-    my_insiden = [i for i in insiden_db if i['username_pelapor'] == session['username']]
-    return render_template('user_dashboard.html',
-        insiden_list=sorted(my_insiden, key=lambda x: x['tanggal'], reverse=True))
+    """Dashboard - display user's reported incidents"""
+    laporan_list = LaporanInsiden.query.filter_by(
+        pelapor_id=session['user_id']
+    ).order_by(LaporanInsiden.created_at.desc()).all()
+    return render_template('user_dashboard.html', laporan_list=laporan_list)
 
 
-@app.route('/user/laporkan', methods=['GET', 'POST'])
+# ═══════════════════════════════════════════════════════════════
+# ROUTES — FORM PELAPORAN (3 STEPS)
+# ═══════════════════════════════════════════════════════════════
+@app.route('/laporkan', methods=['GET', 'POST'])
 @login_required
-def laporkan():
-    """User report incident - create new incident"""
-    if session['role'] == 'admin':
-        return redirect(url_for('admin_dashboard'))
+def laporkan_step1():
+    """Step 1: Pilih Jenis Insiden"""
     if request.method == 'POST':
-        new_id = f"INC-{next_id[0]:03d}"
-        next_id[0] += 1
-        insiden_db.append({
-            'id': new_id,
-            'jenis':             request.form.get('jenis'),
-            'pelapor':           session['nama'],
-            'username_pelapor':  session['username'],
-            'tanggal':           request.form.get('tanggal'),
-            'jam':               request.form.get('jam'),
-            'lokasi':            request.form.get('lokasi'),
-            'deskripsi':         request.form.get('deskripsi'),
-            'dampak':            request.form.get('dampak'),
-            'tindakan_awal':     request.form.get('tindakan_awal'),
-            'tim_csirt':         request.form.get('tim_csirt', ''),
-            'sistem_terdampak':  request.form.get('sistem_terdampak', ''),
-            'ringkasan_insiden': request.form.get('ringkasan_insiden', ''),
-            'kronologi':         request.form.get('kronologi', ''),
-            'akar_masalah':      request.form.get('akar_masalah', ''),
-            'ioc_hash':          request.form.get('ioc_hash', ''),
-            'ioc_ip_domain':     request.form.get('ioc_ip_domain', ''),
-            'ioc_port_media':    request.form.get('ioc_port_media', ''),
-            'analisis_teknis':   request.form.get('analisis_teknis', ''),
-            'aksi_soc':          request.form.get('aksi_soc', ''),
-            'aksi_ir':           request.form.get('aksi_ir', ''),
-            'pemulihan':         request.form.get('pemulihan', ''),
-            'rekomendasi':       request.form.get('rekomendasi', ''),
-            'status':   'Menunggu',
-            'severity': request.form.get('severity', 'Sedang'),
-            'catatan_admin': '',
-            'petugas': '-',
-            'tanggal_update': datetime.now().strftime('%Y-%m-%d'),
+        jenis = request.form.get('jenis_insiden')
+        if not jenis:
+            flash('Pilih jenis insiden!', 'warning')
+            return render_template('laporkan.html', step=1)
+        session['lapor'] = {'jenis_insiden': jenis}
+        return redirect(url_for('laporkan_step2'))
+    return render_template('laporkan.html', step=1)
+
+
+@app.route('/laporkan/step2', methods=['GET', 'POST'])
+@login_required
+def laporkan_step2():
+    """Step 2: Detail Kejadian"""
+    if 'lapor' not in session:
+        return redirect(url_for('laporkan_step1'))
+    if request.method == 'POST':
+        data = session['lapor']
+        data.update({
+            'tanggal': request.form.get('tanggal'),
+            'jam': request.form.get('jam'),
+            'lokasi': request.form.get('lokasi'),
+            'tim_csirt': request.form.get('tim_csirt'),
+            'sistem_terdampak': request.form.get('sistem_terdampak'),
+            'tingkat_keparahan': request.form.get('tingkat_keparahan'),
+            'deskripsi_kejadian': request.form.get('deskripsi_kejadian'),
+            'ringkasan_insiden': request.form.get('ringkasan_insiden'),
+            'kronologi': request.form.get('kronologi'),
         })
-        flash(f'Laporan {new_id} berhasil dikirim!', 'success')
+        session['lapor'] = data
+        return redirect(url_for('laporkan_step3'))
+    return render_template('laporkan.html', step=2, data=session.get('lapor', {}))
+
+
+@app.route('/laporkan/step3', methods=['GET', 'POST'])
+@login_required
+def laporkan_step3():
+    """Step 3: Analisis & Submit → Generate PDF → Konfirmasi"""
+    if 'lapor' not in session:
+        return redirect(url_for('laporkan_step1'))
+
+    if request.method == 'POST':
+        data = session['lapor']
+        data.update({
+            'dampak': request.form.get('dampak'),
+            'tindakan_awal': request.form.get('tindakan_awal'),
+            'akar_masalah': request.form.get('akar_masalah'),
+            'ioc_hash': request.form.get('ioc_hash'),
+            'ioc_ip_domain': request.form.get('ioc_ip_domain'),
+            'ioc_port_media': request.form.get('ioc_port_media'),
+            'analisis_teknis': request.form.get('analisis_teknis'),
+            'aksi_soc': request.form.get('aksi_soc'),
+            'aksi_ir': request.form.get('aksi_ir'),
+            'pemulihan': request.form.get('pemulihan'),
+            'rekomendasi': request.form.get('rekomendasi'),
+        })
+
+        # Save to database
+        nomor = generate_nomor_insiden()
+        laporan = LaporanInsiden(
+            nomor_insiden=nomor,
+            jenis_insiden=data.get('jenis_insiden'),
+            tanggal=data.get('tanggal'),
+            jam=data.get('jam'),
+            lokasi=data.get('lokasi'),
+            tim_csirt=data.get('tim_csirt'),
+            sistem_terdampak=data.get('sistem_terdampak'),
+            tingkat_keparahan=data.get('tingkat_keparahan'),
+            deskripsi_kejadian=data.get('deskripsi_kejadian'),
+            ringkasan_insiden=data.get('ringkasan_insiden'),
+            kronologi=data.get('kronologi'),
+            dampak=data.get('dampak'),
+            tindakan_awal=data.get('tindakan_awal'),
+            akar_masalah=data.get('akar_masalah'),
+            ioc_hash=data.get('ioc_hash'),
+            ioc_ip_domain=data.get('ioc_ip_domain'),
+            ioc_port_media=data.get('ioc_port_media'),
+            analisis_teknis=data.get('analisis_teknis'),
+            aksi_soc=data.get('aksi_soc'),
+            aksi_ir=data.get('aksi_ir'),
+            pemulihan=data.get('pemulihan'),
+            rekomendasi=data.get('rekomendasi'),
+            pelapor_id=session['user_id'],
+            status='Draft'
+        )
+        db.session.add(laporan)
+        db.session.commit()
+
+        # Generate PDF
+        try:
+            pdf_filename = generate_pdf(laporan)
+            laporan.pdf_filename = pdf_filename
+            laporan.status = 'PDF Generated'
+            db.session.commit()
+        except Exception as e:
+            flash(f'Laporan tersimpan, tapi gagal generate PDF: {str(e)}', 'warning')
+
+        session.pop('lapor', None)
+        return redirect(url_for('konfirmasi', id=laporan.id))
+
+    return render_template('laporkan.html', step=3, data=session.get('lapor', {}))
+
+
+# ═══════════════════════════════════════════════════════════════
+# ROUTES — KONFIRMASI & PDF
+# ═══════════════════════════════════════════════════════════════
+@app.route('/konfirmasi/<int:id>')
+@login_required
+def konfirmasi(id):
+    """Confirmation page after report submission"""
+    laporan = LaporanInsiden.query.get_or_404(id)
+    if laporan.pelapor_id != session['user_id']:
+        flash('Anda tidak memiliki akses.', 'error')
         return redirect(url_for('user_dashboard'))
-    return render_template('laporkan.html', today=datetime.now().strftime('%Y-%m-%d'))
+    wa_link = generate_wa_link(laporan)
+    return render_template('konfirmasi.html', laporan=laporan, wa_link=wa_link)
 
 
-@app.route('/user/insiden/<id>')
+@app.route('/download-pdf/<int:id>')
+@login_required
+def download_pdf(id):
+    """Download generated PDF"""
+    from flask import make_response
+
+    laporan = LaporanInsiden.query.get_or_404(id)
+    if laporan.pelapor_id != session['user_id']:
+        flash('Anda tidak memiliki akses.', 'error')
+        return redirect(url_for('user_dashboard'))
+    if not laporan.pdf_filename:
+        flash('PDF belum tersedia.', 'error')
+        return redirect(url_for('user_dashboard'))
+
+    pdf_path = os.path.join(app.config['PDF_FOLDER'], laporan.pdf_filename)
+    if not os.path.exists(pdf_path):
+        flash('File PDF tidak ditemukan.', 'error')
+        return redirect(url_for('user_dashboard'))
+
+    with open(pdf_path, 'rb') as f:
+        pdf_data = f.read()
+
+    filename = f"Laporan_{laporan.nomor_insiden}.pdf"
+    response = make_response(pdf_data)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response.headers['Content-Length'] = len(pdf_data)
+    return response
+
+
+@app.route('/mark-sent/<int:id>', methods=['POST'])
+@login_required
+def mark_sent(id):
+    """Mark report as sent to helpdesk"""
+    laporan = LaporanInsiden.query.get_or_404(id)
+    if laporan.pelapor_id != session['user_id']:
+        flash('Anda tidak memiliki akses.', 'error')
+        return redirect(url_for('user_dashboard'))
+    laporan.status = 'Terkirim'
+    db.session.commit()
+    flash('Status laporan diperbarui: Terkirim ke Helpdesk.', 'success')
+    return redirect(url_for('user_dashboard'))
+
+
+# ═══════════════════════════════════════════════════════════════
+# ROUTES — DETAIL LAPORAN
+# ═══════════════════════════════════════════════════════════════
+@app.route('/laporan/<int:id>')
 @login_required
 def user_detail(id):
-    """Detail view - display their incident"""
-    insiden = next((i for i in insiden_db if i['id'] == id), None)
-    if not insiden or (session['role'] != 'admin' and insiden['username_pelapor'] != session['username']):
-        flash('Anda tidak memiliki akses ke insiden ini.', 'error')
+    """Detail view of a report"""
+    laporan = LaporanInsiden.query.get_or_404(id)
+    if laporan.pelapor_id != session['user_id']:
+        flash('Anda tidak memiliki akses.', 'error')
         return redirect(url_for('user_dashboard'))
-    return render_template('user_detail.html', insiden=insiden)
+    wa_link = generate_wa_link(laporan)
+    return render_template('user_detail.html', laporan=laporan, wa_link=wa_link)
 
 
-# ─── GUIDES (Panduan) ─────────────────────────────────────────────────────────
-@app.route('/guides', methods=['GET'])
+# ═══════════════════════════════════════════════════════════════
+# ROUTES — GUIDES
+# ═══════════════════════════════════════════════════════════════
+@app.route('/guides')
 @login_required
 def view_guides():
     """View all available guides"""
-    guides = guides_db
-    return render_template('guides.html', guides=guides)
-
-
+    return render_template('guides.html', guides=guides_db)
 
 
 @app.route('/guides/<guide_type>/download')
 @login_required
 def download_guide(guide_type):
-    """Download guide"""
+    """Download a guide PDF"""
     if guide_type not in guides_db or not guides_db[guide_type]['filename']:
         flash('Panduan tidak tersedia.', 'error')
         return redirect(url_for('view_guides'))
-    
-    try:
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], guides_db[guide_type]['filename'])
-        if not os.path.exists(filepath):
-            flash('File tidak ditemukan.', 'error')
-            return redirect(url_for('view_guides'))
-        
-        return send_file(
-            filepath,
-            as_attachment=True,
-            download_name=f"Panduan_{guide_type}.pdf",
-            mimetype='application/pdf'
-        )
-    except Exception as e:
-        flash(f'Terjadi kesalahan saat mengunduh file: {str(e)}', 'error')
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], guides_db[guide_type]['filename'])
+    if not os.path.exists(filepath):
+        flash('File tidak ditemukan.', 'error')
         return redirect(url_for('view_guides'))
+    return send_file(
+        filepath, as_attachment=True,
+        download_name=f"Panduan_{guide_type}.pdf",
+        mimetype='application/pdf'
+    )
 
 
+# ═══════════════════════════════════════════════════════════════
+# DATABASE INIT & SEED
+# ═══════════════════════════════════════════════════════════════
+def init_db():
+    """Create tables and seed default users"""
+    with app.app_context():
+        db.create_all()
+        # Seed default users if empty
+        if User.query.count() == 0:
+            default_users = [
+                {'username': 'karyawan1', 'password': 'karyawan123', 'nama': 'Ahmad Fauzi'},
+                {'username': 'karyawan2', 'password': 'karyawan123', 'nama': 'Siti Nurhaliza'},
+                {'username': 'budi', 'password': 'budi123', 'nama': 'Budi Santoso'},
+            ]
+            for u in default_users:
+                user = User(username=u['username'], nama=u['nama'])
+                user.set_password(u['password'])
+                db.session.add(user)
+            db.session.commit()
+            print("[OK] Database initialized with default users:")
+            for u in default_users:
+                print(f"   - {u['username']} / {u['password']}")
+
+
+# ═══════════════════════════════════════════════════════════════
+# MAIN
+# ═══════════════════════════════════════════════════════════════
 if __name__ == '__main__':
+    init_db()
     app.run(debug=True)

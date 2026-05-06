@@ -27,6 +27,8 @@
       --green:    #16a34a;
       --green-bg: rgba(22,163,74,0.1);
       --blue-bg:  rgba(51,102,204,0.08);
+      --teal:     #2AA5A5;
+      --teal-bg:  rgba(42,165,165,0.1);
       --radius:   10px;
       --radius-lg:14px;
       --sidebar:  220px;
@@ -55,7 +57,7 @@
     .sidebar-logo .logo-mark {
       display: inline-flex; align-items: center; justify-content: center;
       width: 32px; height: 32px; border-radius: 8px;
-      background: var(--accent); color: #fff;
+      background: var(--teal); color: #fff;
       font-size: 13px; font-weight: 600; margin-bottom: 10px;
     }
     .sidebar-logo h2 { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; }
@@ -141,6 +143,7 @@
     .stat-value.amber  { color: var(--amber); }
     .stat-value.green  { color: var(--green); }
     .stat-value.blue   { color: var(--accent); }
+    .stat-value.teal   { color: var(--teal); }
 
     /* ── CARDS ── */
     .card {
@@ -164,7 +167,7 @@
     }
     td { padding: 11px 16px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: rgba(255,255,255,0.02); }
+    tr:hover td { background: rgba(51,102,204,0.02); }
     .id-cell { font-family: var(--mono); font-size: 12px; color: var(--text3); }
 
     /* ── BADGES ── */
@@ -178,11 +181,13 @@
     .badge.amber  { background: var(--amber-bg); color: var(--amber); }
     .badge.green  { background: var(--green-bg); color: var(--green); }
     .badge.blue   { background: var(--blue-bg);  color: var(--accent); }
+    .badge.teal   { background: var(--teal-bg);  color: var(--teal); }
     .badge.gray   { background: rgba(255,255,255,0.07); color: var(--text2); }
     .badge.red   .badge-dot { background: var(--red); }
     .badge.amber .badge-dot { background: var(--amber); }
     .badge.green .badge-dot { background: var(--green); }
     .badge.blue  .badge-dot { background: var(--accent); }
+    .badge.teal  .badge-dot { background: var(--teal); }
     .badge.gray  .badge-dot { background: var(--text3); }
 
     /* ── BUTTONS ── */
@@ -194,6 +199,12 @@
     }
     .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
     .btn-primary:hover { background: var(--accent2); border-color: var(--accent2); }
+    .btn-success { background: var(--green); color: #fff; border-color: var(--green); }
+    .btn-success:hover { background: #15803d; border-color: #15803d; }
+    .btn-teal { background: var(--teal); color: #fff; border-color: var(--teal); }
+    .btn-teal:hover { background: #228b8b; border-color: #228b8b; }
+    .btn-wa { background: #25D366; color: #fff; border-color: #25D366; }
+    .btn-wa:hover { background: #1fba59; border-color: #1fba59; }
     .btn-ghost { background: transparent; color: var(--text2); }
     .btn-ghost:hover { background: var(--bg3); color: var(--text); }
     .btn-sm { padding: 5px 10px; font-size: 12px; }
@@ -216,19 +227,23 @@
     select.form-control { cursor: pointer; }
     textarea.form-control { resize: vertical; min-height: 90px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
     .form-hint { font-size: 11px; color: var(--text3); margin-top: 5px; }
 
     /* ── ALERTS ── */
     .alert { padding: 11px 16px; border-radius: var(--radius); font-size: 13px; margin-bottom: 16px; border: 1px solid; }
     .alert-success { background: var(--green-bg); color: var(--green); border-color: rgba(34,197,94,0.3); }
     .alert-error   { background: var(--red-bg);   color: var(--red);   border-color: rgba(239,68,68,0.3); }
+    .alert-warning { background: var(--amber-bg); color: var(--amber); border-color: rgba(217,119,6,0.3); }
 
-    /* ── BAR CHART ── */
-    .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .bar-label { font-size: 12px; color: var(--text2); width: 90px; flex-shrink: 0; }
-    .bar-track { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
-    .bar-fill  { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(.4,0,.2,1); }
-    .bar-count { font-size: 12px; color: var(--text3); width: 20px; text-align: right; flex-shrink: 0; }
+    /* ── DETAIL VIEW ── */
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .detail-section { margin-bottom: 20px; }
+    .detail-section-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px; }
+    .detail-row { display: flex; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-key { width: 160px; flex-shrink: 0; color: var(--text3); }
+    .detail-val { color: var(--text); }
 
     /* ── TIMELINE ── */
     .timeline { padding: 4px 0; }
@@ -242,25 +257,9 @@
     .tl-content .tl-date { font-size: 11px; color: var(--text3); margin-bottom: 2px; }
     .tl-content .tl-text { font-size: 13px; color: var(--text2); }
 
-    /* ── DETAIL VIEW ── */
-    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    .detail-section { margin-bottom: 20px; }
-    .detail-section-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px; }
-    .detail-row { display: flex; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
-    .detail-row:last-child { border-bottom: none; }
-    .detail-key { width: 140px; flex-shrink: 0; color: var(--text3); }
-    .detail-val { color: var(--text); }
-
     /* ── MISC ── */
     .flex-between { display: flex; justify-content: space-between; align-items: center; }
     .flex-gap { display: flex; align-items: center; gap: 10px; }
-    .search-input {
-      background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 7px 12px; font-size: 12px; color: var(--text); font-family: var(--font);
-      outline: none; width: 200px; transition: border-color var(--trans);
-    }
-    .search-input:focus { border-color: var(--accent); }
-    .search-input::placeholder { color: var(--text3); }
     .empty-state { text-align: center; padding: 48px 20px; color: var(--text3); }
     .empty-state p { font-size: 13px; margin-top: 8px; }
 
@@ -280,19 +279,20 @@
     <div class="sidebar-logo">
       <div class="logo-mark">YT</div>
       <h2>Yakes Telkom</h2>
-      <p>Sistem Insiden Siber</p>
+      <p>Sistem Pelaporan Insiden</p>
     </div>
     <nav class="sidebar-nav">
-      <div class="nav-section-label">Menu</div>
+      <div class="nav-section-label">Menu Utama</div>
       <a href="{{ url_for('user_dashboard') }}" class="nav-item {% if request.endpoint == 'user_dashboard' %}active{% endif %}">
         <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
         Dashboard Saya
       </a>
-      <a href="{{ url_for('laporkan') }}" class="nav-item {% if request.endpoint == 'laporkan' %}active{% endif %}">
+      <a href="{{ url_for('laporkan_step1') }}" class="nav-item {% if request.endpoint in ['laporkan_step1','laporkan_step2','laporkan_step3'] %}active{% endif %}">
         <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3v10M3 8h10"/></svg>
-        Laporkan Insiden
+        Buat Laporan Baru
       </a>
-      <div class="nav-section-label" style="margin-top:8px">Panduan</div>
+
+      <div class="nav-section-label" style="margin-top:8px">Referensi</div>
       <div class="nav-item" onclick="toggleSubmenu(event)" style="cursor:pointer">
         <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4"/><path d="M2 4l6-2 6 2"/></svg>
         Panduan
@@ -307,8 +307,11 @@
     </nav>
     <div class="sidebar-footer">
       <div class="user-info">
-        <div class="avatar">{{ session.nama[:2].upper() }}</div>
-        <div class="user-name">{{ session.nama }}</div>
+        <div class="avatar">{{ session.nama[:2]|upper if session.nama else 'U' }}</div>
+        <div>
+          <div class="user-name">{{ session.nama }}</div>
+          <div class="user-role">Karyawan</div>
+        </div>
         <a href="{{ url_for('logout') }}" class="logout-btn">Keluar</a>
       </div>
     </div>
@@ -327,17 +330,16 @@
 function toggleSubmenu(event) {
   const navItem = event.currentTarget;
   const submenu = document.getElementById('submenu-panduan');
-  
   navItem.classList.toggle('expanded');
   submenu.classList.toggle('open');
 }
 
-// Close submenu on window load
 document.addEventListener('DOMContentLoaded', function() {
   const submenu = document.getElementById('submenu-panduan');
   if (submenu) {
     submenu.classList.add('open');
-    document.querySelector('[onclick="toggleSubmenu(event)"]').classList.add('expanded');
+    const toggler = document.querySelector('[onclick="toggleSubmenu(event)"]');
+    if (toggler) toggler.classList.add('expanded');
   }
 });
 </script>
