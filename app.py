@@ -26,6 +26,9 @@ from reportlab.lib.units import cm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 
+# Application initialization utilities
+from utils import initialize_app
+
 # ═══════════════════════════════════════════════════════════════
 # APP CONFIGURATION
 # ═══════════════════════════════════════════════════════════════
@@ -41,6 +44,9 @@ app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'uploads', 'guides')
 os.makedirs(app.config['PDF_FOLDER'], exist_ok=True)
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(os.path.join(basedir, 'instance'), exist_ok=True)
+
+# Initialize app (setup PDF folder gitignore, untrack if needed)
+initialize_app(app)
 
 db = SQLAlchemy(app)
 

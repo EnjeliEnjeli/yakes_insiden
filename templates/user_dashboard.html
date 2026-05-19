@@ -2,13 +2,17 @@
 {% block title %}Dashboard Saya — Yakes Telkom{% endblock %}
 
 {% block content %}
+<div style="margin-bottom: 28px; padding-bottom: 16px; border-bottom: 2px solid var(--border);">
+  <h1 style="font-size: 32px; font-weight: 700; color: var(--text); margin: 0;">Dashboard</h1>
+</div>
+
 <div class="page-header fade-up">
   <div class="flex-between">
     <div>
       <div class="page-title">Selamat datang, {{ session.nama }}</div>
       <div class="page-subtitle">Laporan insiden siber yang Anda ajukan</div>
     </div>
-    <a href="{{ url_for('laporkan_step1') }}" class="btn btn-primary">
+    <a href="{{ url_for('laporkan_step1') }}" class="btn btn-teal">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
       Laporkan Insiden Baru
     </a>
@@ -53,10 +57,11 @@
   <table>
     <thead>
       <tr>
-        <th>No. Insiden</th>
-        <th>Jenis</th>
+        <th>ID</th>
+        <th>Jenis Insiden</th>
+        <th>Pelapor</th>
         <th>Tanggal</th>
-        <th>Keparahan</th>
+        <th>Severity</th>
         <th>Status</th>
         <th>Aksi</th>
       </tr>
@@ -66,6 +71,7 @@
     <tr>
       <td class="id-cell">{{ lap.nomor_insiden }}</td>
       <td>{{ lap.jenis_insiden }}</td>
+      <td>{{ session.nama }}</td>
       <td style="color:var(--text3)">{{ lap.tanggal }}</td>
       <td>
         {% if lap.tingkat_keparahan == 'Tinggi' %}<span class="badge red"><span class="badge-dot"></span>Tinggi</span>
@@ -79,12 +85,13 @@
         {% else %}<span class="badge gray"><span class="badge-dot"></span>{{ lap.status }}</span>{% endif %}
       </td>
       <td>
-        <div class="flex-gap">
-          <a href="{{ url_for('user_detail', id=lap.id) }}" class="btn btn-ghost btn-sm">Detail</a>
+        <div class="flex-gap" style="gap: 8px;">
+          <a href="{{ url_for('user_detail', id=lap.id) }}" title="Edit" style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: #ffc107; border-radius: 6px; color: #fff; text-decoration: none;">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 13.5V14h.5l8-8L10 4l-8 8v.5H2zm10-10l1-1 2 2-1 1-2-2z"/></svg>
+          </a>
           {% if lap.pdf_filename %}
-          <a href="{{ url_for('download_pdf', id=lap.id) }}" class="btn btn-sm btn-primary" title="Download PDF">
-            <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12h8M8 3v7M5 7l3 3 3-3"/></svg>
-            PDF
+          <a href="{{ url_for('download_pdf', id=lap.id) }}" title="Download PDF" style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: #ffffff; border: 1px solid #00bcd4; border-radius: 6px; color: #fff; text-decoration: none;">
+            <img src="{{ url_for('static', filename='img/Picture1.png') }}" alt="PDF" style="width: 16px; height: 16px; object-fit: contain;">
           </a>
           {% endif %}
         </div>
